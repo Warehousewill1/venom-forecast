@@ -4,7 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Venom Skateboards — Container Forecast</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <style>
+  #vessel-map { background: #1a1a2e; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f13; color: #e8e8f0; min-height: 100vh; }
 
@@ -59,19 +61,19 @@
   /* Vessel tracker */
   .vessel-wrap { padding: 0 28px 20px; }
   .vessel-block { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 10px; overflow: hidden; }
-  .vessel-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px 12px; border-bottom: 1px solid #1f1f35; flex-wrap: wrap; gap: 10px; }
-  .vessel-title { display: flex; align-items: center; gap: 10px; }
-  .vessel-title h3 { font-size: 14px; font-weight: 700; color: #fff; }
-  .vessel-title .ship-icon { font-size: 18px; }
-  .vessel-pill { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: #052e16; color: #22c55e; border: 1px solid #14532d; letter-spacing: 0.4px; }
-  .vessel-stats { display: flex; gap: 24px; flex-wrap: wrap; }
+  .vessel-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px 10px; border-bottom: 1px solid #1f1f35; flex-wrap: wrap; gap: 8px; }
+  .vessel-title { display: flex; align-items: center; gap: 8px; }
+  .vessel-title h3 { font-size: 13px; font-weight: 700; color: #fff; }
+  .vessel-title .ship-icon { font-size: 16px; }
+  .vessel-pill { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; background: #052e16; color: #22c55e; border: 1px solid #14532d; letter-spacing: 0.4px; }
+  .vessel-stats { display: flex; gap: 20px; flex-wrap: wrap; }
   .vessel-stat { display: flex; flex-direction: column; }
   .vessel-stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.7px; color: #6b7280; }
-  .vessel-stat-value { font-size: 13px; font-weight: 600; color: #e8e8f0; margin-top: 2px; }
+  .vessel-stat-value { font-size: 12px; font-weight: 600; color: #e8e8f0; margin-top: 1px; }
   .vessel-stat-value.highlight { color: #f97316; }
   .vessel-stat-value.blue { color: #60a5fa; }
-  .vessel-map { width: 100%; height: 380px; border: none; display: block; }
-  .vessel-footer { padding: 8px 18px; font-size: 10px; color: #374151; display: flex; justify-content: space-between; align-items: center; }
+  .vessel-map { width: 100%; height: 260px; border: none; display: block; }
+  .vessel-footer { padding: 6px 16px; font-size: 10px; color: #374151; display: flex; justify-content: space-between; align-items: center; }
   .vessel-footer a { color: #4b5563; text-decoration: none; }
   .vessel-footer a:hover { color: #60a5fa; }
 
@@ -297,16 +299,10 @@
         </div>
       </div>
     </div>
-    <iframe
-      class="vessel-map"
-      src="https://www.vesselfinder.com/emap/?mmsi=256108000&width=1200&height=380&zoom=3&track=1"
-      title="CMA CGM MEKONG live position"
-      loading="lazy"
-      allowfullscreen>
-    </iframe>
+    <div id="vessel-map" class="vessel-map"></div>
     <div class="vessel-footer">
-      <span>Live AIS position via VesselFinder · updates automatically</span>
-      <a href="https://www.vesselfinder.com/vessels/details/9718105" target="_blank" rel="noopener">Open in VesselFinder ↗</a>
+      <span>Estimated position · route via Suez Canal · ETA Rotterdam 29 May 2026</span>
+      <a href="https://www.vesselfinder.com/vessels/details/9718105" target="_blank" rel="noopener">Track on VesselFinder ↗</a>
     </div>
   </div>
 </div>
@@ -676,6 +672,74 @@ async function doDispatch(token) {
 document.getElementById('token-modal').addEventListener('click', function(e) {
   if (e.target === this) closeTokenModal();
 });
+</script>
+
+<!-- Leaflet vessel map -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN2GqnA=" crossorigin=""></script>
+<script>
+(function() {
+  var map = L.map('vessel-map', { zoomControl: true, attributionControl: false }).setView([30, 45], 3);
+
+  // Dark tile layer (CartoDB Dark Matter)
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    subdomains: 'abcd', maxZoom: 14
+  }).addTo(map);
+
+  // Route: Yantian → Singapore → through Malacca → Indian Ocean → Aden → Suez → Med → Gibraltar → Rotterdam
+  var route = [
+    [22.60, 114.40],  // Yantian, China
+    [1.26,  103.82],  // Singapore
+    [5.42,   98.68],  // Malacca Strait N
+    [-5.0,   80.0],   // Indian Ocean
+    [11.60,  43.15],  // Gulf of Aden / Djibouti
+    [12.60,  43.50],  // Red Sea entry
+    [27.5,   34.0],   // Red Sea N
+    [30.02,  32.57],  // Suez Canal
+    [31.25,  32.30],  // Port Said / Med entry
+    [35.90,  14.52],  // Malta
+    [37.90,  15.55],  // Sicily
+    [36.14,  -5.36],  // Gibraltar
+    [45.80,  -9.00],  // Bay of Biscay
+    [51.90,   4.50],  // Rotterdam
+  ];
+
+  // Draw route polyline
+  L.polyline(route, { color: '#f97316', weight: 2.5, opacity: 0.8, dashArray: '6,4' }).addTo(map);
+
+  // ── Estimated current position ──
+  // Departed Yantian ~5 May 2026. ETA Rotterdam 29 May 2026. Today: 21 May 2026.
+  // Total voyage ~24 days. Days elapsed: ~16 days (~67% complete).
+  // At ~67% along the route → approximately in the Central Mediterranean (near Malta/Sicily)
+  var shipLat = 37.1, shipLng = 12.0;
+
+  // Custom ship icon
+  var shipIcon = L.divIcon({
+    html: '<div style="font-size:20px;line-height:1;filter:drop-shadow(0 0 4px #f97316);">🚢</div>',
+    className: '',
+    iconAnchor: [10, 10]
+  });
+
+  L.marker([shipLat, shipLng], { icon: shipIcon })
+    .addTo(map)
+    .bindPopup('<b>CMA CGM MEKONG</b><br>Est. position · 21 May 2026<br>ETA Rotterdam: 29 May 2026', { className: 'vessel-popup' })
+    .openPopup();
+
+  // Port markers
+  var portIcon = function(label) {
+    return L.divIcon({
+      html: '<div style="background:#1e293b;border:1px solid #475569;color:#94a3b8;font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;white-space:nowrap;">' + label + '</div>',
+      className: '',
+      iconAnchor: [20, 8]
+    });
+  };
+  L.marker([22.60, 114.40], { icon: portIcon('YANTIAN') }).addTo(map);
+  L.marker([51.90,   4.50], { icon: portIcon('ROTTERDAM') }).addTo(map);
+
+  // Custom popup style
+  var style = document.createElement('style');
+  style.textContent = '.vessel-popup .leaflet-popup-content-wrapper { background:#1e293b; color:#e2e8f0; border:1px solid #475569; border-radius:6px; font-size:12px; } .vessel-popup .leaflet-popup-tip { background:#1e293b; }';
+  document.head.appendChild(style);
+})();
 </script>
 </body>
 </html>
