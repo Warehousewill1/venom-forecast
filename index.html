@@ -30,9 +30,10 @@
   .card-sub { font-size: 12px; color: #6b7280; margin-top: 4px; }
 
   /* Shipment row — container fills + tracker side by side */
-  .shipment-row { display: grid; grid-template-columns: 5fr 7fr; gap: 16px; padding: 0 28px 20px; align-items: start; }
+  .shipment-row { display: grid; grid-template-columns: 5fr 7fr; gap: 16px; padding: 0 28px 20px; align-items: stretch; }
   .shipment-left { display: flex; flex-direction: column; }
   .shipment-right { display: flex; flex-direction: column; }
+  .shipment-right .vessel-block { flex: 1; }
   .container-stack { display: flex; flex-direction: column; gap: 10px; }
   .container-section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: #6b7280; margin-bottom: 10px; }
   .container-block { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 10px; padding: 14px 16px; }
