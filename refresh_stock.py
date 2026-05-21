@@ -131,14 +131,18 @@ def get_inventory_item_id(server, token, sku):
     resp = requests.post(
         f"{server}/api/Inventory/GetInventoryItemBysku",
         headers={"Authorization": token},
-        data={"sku": sku},
+        data={"SKU": sku},   # Linnworks requires uppercase SKU
         timeout=20,
     )
     if resp.status_code != 200:
         return None
     data = resp.json()
-    # Response is an object with StockItemId field
-    return data.get("StockItemId") or data.get("Id")
+    return (
+        data.get("StockItemId")
+        or data.get("pkStockItemId")
+        or data.get("Id")
+        or data.get("id")
+    )
 
 
 def get_default_stock(server, token, item_id):
@@ -198,18 +202,9 @@ def fetch_open_pos(server, token):
     print("\nFetching open Venom purchase orders...")
     try:
         # Get all open POs
-        resp = requests.post(
-            f"{server}/api/PurchaseOrder/GetAllPurchaseOrdersPagedByCriteria",
+        resp = requests.get(
+            f"{server}/api/PurchaseOrder/GetAllPurchaseOrders",
             headers={"Authorization": token},
-            json={
-                "criteria": {
-                    "SortDirection": "ASC",
-                    "StatusIds": [2],   # 2 = Open
-                    "DateRange": None,
-                    "PageNumber": 1,
-                    "EntriesPerPage": 200,
-                }
-            },
             timeout=30,
         )
         if resp.status_code != 200:
@@ -217,18 +212,19 @@ def fetch_open_pos(server, token):
             return po_qty
 
         result = resp.json()
-        all_pos = result if isinstance(result, list) else result.get("Data", [])
+        all_pos = result if isinstance(result, list) else result.get("Data", result.get("PurchaseOrders", []))
 
-        # Filter to Skatewarehouse Ltd only
+        # Filter to Skatewarehouse Ltd open POs only
         venom_pos = [
             po for po in all_pos
             if (po.get("fkSupplierId") or po.get("SupplierId", "")) == VENOM_SUPPLIER_ID
+            and (po.get("Status") or po.get("StatusCode", "")).upper() in ("OPEN", "PENDING", "PARTIAL", "2", "1", "3")
         ]
         print(f"  Found {len(venom_pos)} open Venom PO(s)")
 
         for po in venom_pos:
             po_id = po.get("pkPurchaseId") or po.get("Id", "")
-            ref   = po.get("ExternalInvoiceNumber") or po.get("Reference", po_id)
+            ref   = po.get("ExternalInvoiceNumber") or po.get("Reference", str(po_id))
             if not po_id:
                 continue
 
