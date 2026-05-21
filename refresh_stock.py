@@ -23,6 +23,7 @@ TOKEN      = os.environ["LINNWORKS_TOKEN"]
 DEFAULT_LOC_ID    = "00000000-0000-0000-0000-000000000000"
 VENOM_SUPPLIER_ID = "9a2026ab-8e68-49a2-a3e0-2cc36a41501c"  # Skatewarehouse Ltd
 
+# These 78 SKUs exactly match the dashboard (derived from index.html RAW JSON)
 SKUS = [
     "ven-20-black-raw-core-complete-8.0",
     "ven-20-natural-raw-core-complete-8.5",
@@ -32,77 +33,76 @@ SKUS = [
     "vnm-skullspots-teal-MID",
     "vnm-sun-moon-black-MID",
     "vnm-cat-pink-JNR",
-    "vnm-dragon-blue-MFS",
+    "vnm-kittypaw-purple-JNR",
+    "vnm-kittyswipe-blue-JNR",
+    "vnm-skull-teal-JNR",
+    "vnm-skull-black-JNR",
+    "vnm-mid-doughnuts",
+    "vnm-mid-fadeoutlines",
+    "vnm-unicorn-flip-JNR",
     "vnm-jnr-desert-viper",
     "vnm-jnr-ice-fab",
     "vnm-jnr-melons",
     "vnm-jnr-unicorn",
-    "vnm-kittypaw-purple-JNR",
-    "vnm-kittyswipe-blue-JNR",
-    "vnm-robodino-red-MFS",
-    "vnm-skull-black-JNR",
-    "vnm-unicorn-flip-JNR",
     "vnm-unicorn-night-JNR",
+    "vnm_uc_BLT-raw-5.5",
+    "vnm_uc_BLT-raw-5.25",
+    "vnm_uc_BLT-raw-5.0",
+    "vnm-deck-silver",
     "vnm-deck-gold",
+    "vnm-dragon-blue-MFS",
+    "vnm-football-blues-MFS",
+    "vnm-robodino-red-MFS",
+    "vnm-football-reds-MFS",
     "vnm-deck-mattblack",
     "vnm-deck-mattwhite",
-    'vnm_blank_black-8.0"',
     'vnm_blank_black-8.25"',
     'vnm_blank_black-8.5"',
-    'vnm_blank_nat-8.0"',
+    'vnm_blank_black-8.0"',
     'vnm_blank_nat-8.25"',
     'vnm_blank_nat-8.5"',
+    'vnm_blank_nat-7.5"',
+    'vnm_blank_nat-7.75"',
+    'vnm_blank_nat-8.0"',
+    "vnm-premiumXLgiftpack",
+    "venom-helmet-Small",
+    "venom-helmet-Medium",
+    "venom-helmet-Large",
+    "vnm-helmet-blue-small",
+    "vnm-helmet-blue-medium",
+    "vnm-helmet-pink-small",
+    "vnm-helmet-pink-medium",
+    "vnm-helmet-red-small",
+    "vnm-helmet-red-medium",
+    "venom-triplepads-junior",
+    "venom-triplepads-adult",
+    "vnm-triplepads-blueblack-jnr",
+    "vnm-triplepads-blueblack-adt",
+    "vnm-triplepads-pinkwhite-jnr",
+    "vnm-triplepads-pinkwhite-adt",
+    "vnm-triplepads-redblack-jnr",
+    "vnm-triplepads-redblack-adt",
+    "vnm-premiumgiftpack",
+    "vnm_bearings_gold",
+    "vnm_artdeck_8.0",
     "swh_abec11",
+    "venom_abec11",
     "swh_abec9",
+    "venom_abec9",
+    "vnm_tc_wheels_54mm",
+    "vnm_tc_wheels_56mm",
+    "vnm_tc_wheels_58mm",
+    "vnm_tc_wheels_60mm",
+    "vnm_tc_wheels_52mm",
+    "vnm-ultimategiftpack",
+    "vnm_logo_wheel-52mm",
+    "venom-ttool-black",
+    "ven_ttool",
     "blackgrip-9x33",
     "vnm-gt-clear",
     "venom-skate-lube",
     "ven-grip-cleaner",
     "ven_hardware",
-    "venom-ttool-black",
-    "vnm-premiumgiftpack",
-    "vnm-premiumXLgiftpack",
-    "vnm-ultimategiftpack",
-    "venom-helmet-Small",
-    "venom-helmet-Medium",
-    "venom-helmet-Large",
-    "vnm-helmet-pink-small",
-    "vnm-helmet-pink-medium",
-    "vnm-helmet-red-small",
-    "vnm-helmet-red-medium",
-    "venom-triplepads-adult",
-    "vnm-triplepads-blueblack-jnr",
-    "vnm-triplepads-pinkwhite-jnr",
-    "vnm-triplepads-redblack-jnr",
-    "vnm_uc_BLT-raw-5.0",
-    "vnm_uc_BLT-raw-5.25",
-    "ven-20-black-raw-core-complete-7.75",
-    "ven-20-black-raw-core-complete-8.25",
-    "ven-20-natural-raw-core-complete-8.0",
-    "ven-20-natural-raw-core-complete-8.25",
-    "vnm-jnr-abominable",
-    "vnm-jnr-funghoul",
-    "vnm-jnr-party-parrot",
-    "vnm-jnr-patchwork",
-    "vnm-jnr-pizza",
-    "vnm-jnr-rainbow-uni",
-    "vnm-mid-astro",
-    "vnm-mid-cloudkicker",
-    "vnm-mid-houndstooth",
-    "vnm-mid-riptide",
-    "vnm-mid-robo-kitty",
-    "vnm-mid-seagull",
-    "vnm-mid-slime",
-    "vnm-mid-street-dreams",
-    "vnm-mid-wildcat",
-    "vnm-mfs-astro",
-    "vnm-mfs-pizza",
-    "vnm-mfs-street-dreams",
-    "vnm-mfs-wildcat",
-    "vnm-skull-jnr",
-    "vnm-skull-mid",
-    "vnm-skull-mfs",
-    "vnm-skull-ppro",
 ]
 
 
@@ -275,26 +275,32 @@ def update_html(stock_data, po_data=None):
     for sku_obj in raw["skus"]:
         sku = sku_obj["sku"]
 
-        # Update stock
-        if sku in stock_data:
-            new_stock = stock_data[sku]
-            sku_obj["stock"] = new_stock
-            # Recalculate downstream
-            demand     = sku_obj.get("demand", 0)
-            carton_qty = sku_obj.get("carton_qty", 1) or 1
-            cbm_carton = sku_obj.get("cbm_carton", 0)
-            cost_usd   = sku_obj.get("cost_usd", 0)
-            net        = max(0, demand - new_stock)
-            cartons    = round(net / carton_qty)
-            sku_obj["net_order"]  = net
-            sku_obj["cartons"]    = cartons
-            sku_obj["order_cbm"]  = round(cartons * cbm_carton, 4)
-            sku_obj["order_cost"] = round(cartons * carton_qty * cost_usd, 2)
-
-        # Update PO quantity (always overwrite so removals are reflected)
+        live_stock  = stock_data.get(sku, sku_obj.get("stock", 0))
         outstanding = po_data.get(sku, 0)
-        sku_obj["po_qty"]  = outstanding
-        sku_obj["has_po"]  = outstanding > 0
+        total_stock = live_stock + outstanding
+
+        # Update PO fields (always overwrite so removals are reflected)
+        sku_obj["po_qty"] = outstanding
+        sku_obj["has_po"] = outstanding > 0
+
+        # Update stock = live + PO incoming; recalculate downstream
+        sku_obj["stock"] = total_stock
+        demand     = sku_obj.get("demand", 0)
+        carton_qty = sku_obj.get("carton_qty", 1) or 1
+        cbm_carton = sku_obj.get("cbm_carton", 0)
+        cost_usd   = sku_obj.get("cost_usd", 0)
+        net        = max(0, demand - total_stock)
+        cartons    = round(net / carton_qty) if net > 0 else 0
+        sku_obj["net_order"]  = net
+        sku_obj["cartons"]    = cartons
+        sku_obj["order_cbm"]  = round(cartons * cbm_carton, 4)
+        sku_obj["order_cost"] = round(cartons * carton_qty * cost_usd, 2)
+        if total_stock == 0:
+            sku_obj["status"] = "OUT"
+        elif total_stock < demand:
+            sku_obj["status"] = "LOW"
+        else:
+            sku_obj["status"] = "OK"
 
     # Update last-refreshed timestamp in header
     now_str = datetime.datetime.utcnow().strftime("%-d %b %Y")
