@@ -426,11 +426,13 @@ function renderSummary(filtered) {
   const totalCartons = needOrder.reduce((a,s) => a + s.cartons, 0);
   const outOfStock = filtered.filter(s => getStatus(s) === 'OUT').length;
 
-  // Lost sales estimate: sum of (monthly_avgs[currentMonth] × sell_gbp) for all OUT SKUs
+  // Lost sales estimate: sum of (monthly_avgs[currentMonth] × sell_gbp) for ALL zero-stock SKUs
+  // Includes SKUs with incoming POs — they still have no stock to sell right now
   const curMonth = new Date().getMonth(); // 0=Jan … 11=Dec
   const curMonthName = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][curMonth];
-  const lostSales = RAW.skus
-    .filter(s => getStatus(s) === 'OUT' && s.sell_gbp && s.monthly_avgs && s.monthly_avgs[curMonth] > 0)
+  const zeroStockSkus = RAW.skus.filter(s => s.stock === 0);
+  const lostSales = zeroStockSkus
+    .filter(s => s.sell_gbp && s.monthly_avgs && s.monthly_avgs[curMonth] > 0)
     .reduce((sum, s) => sum + s.monthly_avgs[curMonth] * s.sell_gbp, 0);
 
   document.getElementById('summary-cards').innerHTML = `
@@ -462,7 +464,7 @@ function renderSummary(filtered) {
     <div class="card-lost">
       <div class="card-label" style="color:#f87171;">Lost Sales (${curMonthName})</div>
       <div class="card-value red">£${fmt(Math.round(lostSales))}</div>
-      <div class="card-sub" style="color:#9ca3af;">${outOfStock} OOS SKUs · est. revenue missed</div>
+      <div class="card-sub" style="color:#9ca3af;">${zeroStockSkus.length} zero-stock SKUs · incl. PO incoming</div>
     </div>
   `;
 
