@@ -20,7 +20,8 @@ APP_ID     = os.environ["LINNWORKS_APP_ID"]
 APP_SECRET = os.environ["LINNWORKS_APP_SECRET"]
 TOKEN      = os.environ["LINNWORKS_TOKEN"]
 
-DEFAULT_LOC_ID = "00000000-0000-0000-0000-000000000000"
+DEFAULT_LOC_ID    = "00000000-0000-0000-0000-000000000000"
+VENOM_SUPPLIER_ID = "9a2026ab-8e68-49a2-a3e0-2cc36a41501c"  # Skatewarehouse Ltd
 
 SKUS = [
     "ven-20-black-raw-core-complete-8.0",
@@ -164,9 +165,8 @@ def get_default_stock(server, token, item_id):
     return 0
 
 
-def fetch_all_stock():
+def fetch_all_stock(server, token):
     """Return dict of {sku: stock_level} for all SKUs."""
-    token, server = authenticate()
     results = {}
     errors  = []
 
@@ -192,8 +192,80 @@ def fetch_all_stock():
     return results, errors
 
 
-def update_html(stock_data):
-    """Read index.html, update the RAW JSON stock values, write back."""
+def fetch_open_pos(server, token):
+    """Return {sku: outstanding_qty} from open Venom (Skatewarehouse Ltd) POs."""
+    po_qty = {}
+    print("\nFetching open Venom purchase orders...")
+    try:
+        # Get all open POs
+        resp = requests.post(
+            f"{server}/api/PurchaseOrder/GetAllPurchaseOrdersPagedByCriteria",
+            headers={"Authorization": token},
+            json={
+                "criteria": {
+                    "SortDirection": "ASC",
+                    "StatusIds": [2],   # 2 = Open
+                    "DateRange": None,
+                    "PageNumber": 1,
+                    "EntriesPerPage": 200,
+                }
+            },
+            timeout=30,
+        )
+        if resp.status_code != 200:
+            print(f"  ⚠️  PO list HTTP {resp.status_code} — skipping PO data")
+            return po_qty
+
+        result = resp.json()
+        all_pos = result if isinstance(result, list) else result.get("Data", [])
+
+        # Filter to Skatewarehouse Ltd only
+        venom_pos = [
+            po for po in all_pos
+            if (po.get("fkSupplierId") or po.get("SupplierId", "")) == VENOM_SUPPLIER_ID
+        ]
+        print(f"  Found {len(venom_pos)} open Venom PO(s)")
+
+        for po in venom_pos:
+            po_id = po.get("pkPurchaseId") or po.get("Id", "")
+            ref   = po.get("ExternalInvoiceNumber") or po.get("Reference", po_id)
+            if not po_id:
+                continue
+
+            detail_resp = requests.get(
+                f"{server}/api/PurchaseOrder/GetPurchaseOrderById",
+                headers={"Authorization": token},
+                params={"id": po_id},
+                timeout=20,
+            )
+            if detail_resp.status_code != 200:
+                print(f"  ⚠️  PO detail {ref} HTTP {detail_resp.status_code} — skipping")
+                continue
+
+            detail = detail_resp.json()
+            items  = detail.get("Items", detail.get("PurchaseItems", []))
+            count  = 0
+            for item in items:
+                sku         = item.get("SKU") or item.get("sku") or item.get("ItemNumber", "")
+                qty         = float(item.get("dQuantity") or item.get("Quantity") or 0)
+                delivered   = float(item.get("dDelivered") or item.get("Delivered") or 0)
+                outstanding = max(0, int(qty - delivered))
+                if sku and outstanding > 0:
+                    po_qty[sku] = po_qty.get(sku, 0) + outstanding
+                    count += 1
+            print(f"  {ref}: {count} SKUs with outstanding qty")
+
+    except Exception as e:
+        print(f"  ⚠️  Error fetching POs: {e} — continuing without PO data")
+
+    return po_qty
+
+
+def update_html(stock_data, po_data=None):
+    """Read index.html, update stock + PO quantities in the RAW JSON, write back."""
+    if po_data is None:
+        po_data = {}
+
     html_path = os.path.join(os.path.dirname(__file__), "index.html")
     with open(html_path, "r", encoding="utf-8") as f:
         html = f.read()
@@ -206,6 +278,8 @@ def update_html(stock_data):
 
     for sku_obj in raw["skus"]:
         sku = sku_obj["sku"]
+
+        # Update stock
         if sku in stock_data:
             new_stock = stock_data[sku]
             sku_obj["stock"] = new_stock
@@ -220,6 +294,11 @@ def update_html(stock_data):
             sku_obj["cartons"]    = cartons
             sku_obj["order_cbm"]  = round(cartons * cbm_carton, 4)
             sku_obj["order_cost"] = round(cartons * carton_qty * cost_usd, 2)
+
+        # Update PO quantity (always overwrite so removals are reflected)
+        outstanding = po_data.get(sku, 0)
+        sku_obj["po_qty"]  = outstanding
+        sku_obj["has_po"]  = outstanding > 0
 
     # Update last-refreshed timestamp in header
     now_str = datetime.datetime.utcnow().strftime("%-d %b %Y")
@@ -255,6 +334,8 @@ def print_summary(raw, errors):
 
 
 if __name__ == "__main__":
-    stock_data, errors = fetch_all_stock()
-    raw = update_html(stock_data)
+    token, server  = authenticate()
+    stock_data, errors = fetch_all_stock(server, token)
+    po_data        = fetch_open_pos(server, token)
+    raw            = update_html(stock_data, po_data)
     print_summary(raw, errors)
