@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Venom Skateboards — Container Forecast</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f13; color: #e8e8f0; min-height: 100vh; }
+
+  /* Header */
+  .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-bottom: 1px solid #2a2a4a; padding: 20px 28px; display: flex; align-items: center; justify-content: space-between; }
+  .header-left h1 { font-size: 22px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+  .header-left h1 span { color: #f97316; }
+  .header-left p { font-size: 13px; color: #6b7280; margin-top: 2px; }
+  .header-right { font-size: 12px; color: #4b5563; text-align: right; }
+  .header-right strong { color: #9ca3af; }
+
+  /* Summary cards */
+  .summary { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; padding: 20px 28px; }
+  .card { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 10px; padding: 16px 18px; }
+  .card-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: #6b7280; margin-bottom: 6px; }
+  .card-value { font-size: 26px; font-weight: 700; color: #fff; line-height: 1; }
+  .card-value.orange { color: #f97316; }
+  .card-value.green { color: #22c55e; }
+  .card-value.blue { color: #60a5fa; }
+  .card-value.red { color: #ef4444; }
+  .card-sub { font-size: 12px; color: #6b7280; margin-top: 4px; }
+
+  /* Container fill bars */
+  .container-bar-wrap { padding: 0 28px 20px; }
+  .container-section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: #6b7280; margin-bottom: 10px; }
+  .container-bars { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .container-block { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 10px; padding: 14px 16px; }
+  .container-block.active-container { border-color: #f97316; box-shadow: 0 0 0 1px #f9731640; }
+  .container-block-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .container-block-title { font-size: 13px; font-weight: 600; color: #d1d5db; }
+  .container-block-capacity { font-size: 11px; color: #4b5563; }
+  .container-bar-bg { background: #0f0f13; border-radius: 6px; height: 24px; overflow: hidden; position: relative; }
+  .container-bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; transition: width 0.8s ease; }
+  .container-bar-fill span { font-size: 11px; font-weight: 700; color: #fff; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+  .container-bar-fill.green { background: linear-gradient(90deg, #16a34a, #22c55e); }
+  .container-bar-fill.orange { background: linear-gradient(90deg, #c2410c, #f97316); }
+  .container-bar-fill.red { background: linear-gradient(90deg, #991b1b, #ef4444); }
+  .container-stats { display: flex; justify-content: space-between; margin-top: 8px; }
+  .container-stat { font-size: 11px; }
+  .container-stat .val { color: #e8e8f0; font-weight: 600; }
+  .container-stat .lbl { color: #4b5563; }
+  .container-verdict { margin-top: 7px; font-size: 11px; font-weight: 600; }
+  .verdict-fits { color: #22c55e; }
+  .verdict-over { color: #9ca3af; }
+  .freight-info { margin-top: 10px; padding-top: 8px; border-top: 1px solid #1f1f35; }
+  .freight-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
+  .freight-lbl { font-size: 11px; color: #4b5563; }
+  .freight-val { font-size: 11px; color: #9ca3af; font-weight: 600; }
+  .freight-row.freight-landed .freight-val { color: #60a5fa; }
+  .freight-source { font-size: 10px; color: #374151; margin-top: 5px; font-style: italic; }
+
+  /* Controls */
+  .controls { padding: 0 28px 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .search-box { flex: 1; min-width: 200px; max-width: 320px; background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 8px; padding: 8px 14px; color: #e8e8f0; font-size: 13px; outline: none; }
+  .search-box:focus { border-color: #f97316; }
+  .search-box::placeholder { color: #4b5563; }
+  .filter-btn { padding: 8px 16px; border-radius: 8px; border: 1px solid #2a2a4a; background: #1a1a2e; color: #9ca3af; font-size: 12px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .filter-btn:hover { border-color: #f97316; color: #f97316; }
+  .filter-btn.active { background: #f97316; border-color: #f97316; color: #fff; font-weight: 600; }
+  .sort-select { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 8px; padding: 8px 12px; color: #9ca3af; font-size: 12px; cursor: pointer; outline: none; }
+  .sort-select:focus { border-color: #f97316; }
+  .cat-select { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 8px; padding: 8px 12px; color: #9ca3af; font-size: 12px; cursor: pointer; outline: none; }
+  .results-count { margin-left: auto; font-size: 12px; color: #4b5563; }
+
+  /* Table */
+  .table-wrap { padding: 0 28px 40px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { background: #13131f; border-bottom: 2px solid #2a2a4a; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.7px; color: #6b7280; white-space: nowrap; cursor: pointer; user-select: none; }
+  thead th:hover { color: #f97316; }
+  thead th.sorted { color: #f97316; }
+  tbody tr { border-bottom: 1px solid #1f1f35; transition: background 0.1s; }
+  tbody tr:hover { background: #1a1a2e; }
+  tbody td { padding: 10px 12px; vertical-align: middle; }
+  .td-sku { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px; color: #9ca3af; max-width: 200px; }
+  .td-desc { color: #d1d5db; max-width: 220px; }
+  .td-num { text-align: right; font-variant-numeric: tabular-nums; }
+  .td-num.highlight { color: #f97316; font-weight: 600; }
+  .td-num.green { color: #22c55e; }
+
+  /* Status badge */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; }
+  .badge-OUT { background: #450a0a; color: #ef4444; border: 1px solid #7f1d1d; }
+  .badge-LOW { background: #431407; color: #f97316; border: 1px solid #7c2d12; }
+  .badge-TIGHT { background: #422006; color: #fb923c; border: 1px solid #92400e; }
+  .badge-OK { background: #052e16; color: #22c55e; border: 1px solid #14532d; }
+
+  /* PO indicator */
+  .po-tag { display: inline-block; font-size: 9px; background: #1e3a5f; color: #60a5fa; border: 1px solid #1e40af; border-radius: 3px; padding: 1px 5px; margin-left: 4px; vertical-align: middle; }
+
+  /* Stock cell */
+  .stock-cell { display: flex; align-items: center; gap: 4px; justify-content: flex-end; }
+
+  /* Sparkline */
+  .sparkline { display: inline-flex; align-items: flex-end; gap: 2px; height: 24px; }
+  .spark-bar { background: #374151; border-radius: 2px; width: 4px; transition: background 0.1s; }
+  .spark-bar.peak { background: #f97316; }
+
+  /* Category tag */
+  .cat-tag { font-size: 10px; color: #4b5563; }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 60px; color: #4b5563; }
+  .empty svg { margin-bottom: 12px; }
+
+  /* Footer */
+  .footer { padding: 16px 28px; border-top: 1px solid #1f1f35; font-size: 11px; color: #374151; display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>🛹 <span>Venom Skateboards</span> — Container Order Forecast</h1>
+    <p>Lead time 4 months · 6 months cover · 1.5 months safety stock · +20% growth uplift · Horizon: 10 months</p>
+  </div>
+  <div class="header-right">
+    <strong style="color:#9ca3af;">Stock data:</strong> <span id="data-date">20 May 2026</span><br>
+    <span style="font-size:11px;color:#4b5563;">Live Linnworks · Updated weekly via GitHub Actions</span>
+  </div>
+</div>
+
+<div class="summary" id="summary-cards"></div>
+
+<div class="container-bar-wrap">
+  <div class="container-section-label">Container fill estimate</div>
+  <div class="container-bars">
+    <!-- 20ft -->
+    <div class="container-block" id="block-20ft">
+      <div class="container-block-header">
+        <span class="container-block-title">📦 20ft Container</span>
+        <span class="container-block-capacity">Capacity: ~25 CBM</span>
+      </div>
+      <div class="container-bar-bg">
+        <div class="container-bar-fill" id="fill-20ft" style="width:0%">
+          <span id="fill-20ft-text"></span>
+        </div>
+      </div>
+      <div class="container-stats">
+        <div class="container-stat"><span class="val" id="stat-20ft-cbm">—</span> <span class="lbl">CBM used</span></div>
+        <div class="container-stat"><span class="val" id="stat-20ft-pct">—</span> <span class="lbl">full</span></div>
+        <div class="container-stat"><span class="val" id="stat-20ft-rem">—</span> <span class="lbl">CBM remaining</span></div>
+      </div>
+      <div class="container-verdict" id="verdict-20ft"></div>
+      <div class="freight-info">
+        <div class="freight-row">
+          <span class="freight-lbl">Est. freight</span>
+          <span class="freight-val">~$2,875</span>
+        </div>
+        <div class="freight-row">
+          <span class="freight-lbl">Transit time</span>
+          <span class="freight-val">~42 days</span>
+        </div>
+        <div class="freight-row freight-landed">
+          <span class="freight-lbl">Landed est. (order + freight)</span>
+          <span class="freight-val" id="landed-20ft-val">—</span>
+        </div>
+        <div class="freight-source">Freightos marketplace + forwarder quotes · Ningbo→Southampton · May 2026</div>
+      </div>
+    </div>
+    <!-- 40ft -->
+    <div class="container-block" id="block-40ft">
+      <div class="container-block-header">
+        <span class="container-block-title">🚢 40ft Container</span>
+        <span class="container-block-capacity">Capacity: ~55 CBM</span>
+      </div>
+      <div class="container-bar-bg">
+        <div class="container-bar-fill" id="fill-40ft" style="width:0%">
+          <span id="fill-40ft-text"></span>
+        </div>
+      </div>
+      <div class="container-stats">
+        <div class="container-stat"><span class="val" id="stat-40ft-cbm">—</span> <span class="lbl">CBM used</span></div>
+        <div class="container-stat"><span class="val" id="stat-40ft-pct">—</span> <span class="lbl">full</span></div>
+        <div class="container-stat"><span class="val" id="stat-40ft-rem">—</span> <span class="lbl">CBM remaining</span></div>
+      </div>
+      <div class="container-verdict" id="verdict-40ft"></div>
+      <div class="freight-info">
+        <div class="freight-row">
+          <span class="freight-lbl">Est. freight</span>
+          <span class="freight-val">~$3,955</span>
+        </div>
+        <div class="freight-row">
+          <span class="freight-lbl">Transit time</span>
+          <span class="freight-val">~42 days</span>
+        </div>
+        <div class="freight-row freight-landed">
+          <span class="freight-lbl">Landed est. (order + freight)</span>
+          <span class="freight-val" id="landed-40ft-val">—</span>
+        </div>
+        <div class="freight-source">Freightos marketplace + forwarder quotes · Ningbo→Southampton · May 2026</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+  <input type="text" class="search-box" id="search" placeholder="Search SKU or description…">
+  <button class="filter-btn active" data-filter="all">All SKUs</button>
+  <button class="filter-btn" data-filter="order">Needs Ordering</button>
+  <button class="filter-btn" data-filter="OUT">Out of Stock</button>
+  <button class="filter-btn" data-filter="OK">Well Stocked</button>
+  <select class="cat-select" id="cat-filter">
+    <option value="">All Categories</option>
+  </select>
+  <select class="sort-select" id="sort-select">
+    <option value="net_order_desc">Sort: Largest Order First</option>
+    <option value="order_cbm_desc">Sort: CBM (high→low)</option>
+    <option value="order_cost_desc">Sort: Cost (high→low)</option>
+    <option value="stock_asc">Sort: Lowest Stock First</option>
+    <option value="sku_asc">Sort: SKU A→Z</option>
+    <option value="category_asc">Sort: Category</option>
+  </select>
+  <span class="results-count" id="results-count"></span>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Status</th>
+        <th>Category</th>
+        <th>SKU / Description</th>
+        <th class="td-num" title="Seasonal sales pattern">Seasonality</th>
+        <th class="td-num">Current Stock</th>
+        <th class="td-num">10m Demand</th>
+        <th class="td-num">Net to Order</th>
+        <th class="td-num">Cartons</th>
+        <th class="td-num">CBM</th>
+        <th class="td-num">Cost (USD)</th>
+      </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
+  <div class="empty" id="empty-state" style="display:none">
+    <div>No SKUs match your filters.</div>
+  </div>
+</div>
+
+<div class="footer">
+  <span>🟠 Orange stock = live stock + PO30032644319 incoming · 🟡 Yellow = live stock only</span>
+  <span>Container sizes: 20ft ≈ 25 CBM · 40ft ≈ 55 CBM</span>
+</div>
+
+<script>
+const RAW = {"skus":[{"sku":"ven-20-black-raw-core-complete-8.0","desc":"Ven 20 Black Raw Core Complete 8.0","cost_usd":22.52,"carton_qty":4,"cbm_carton":0.055335,"monthly_avgs":[0,0,4.5,5,6,0,0,7,12,16,5.5,18.5],"last12":148,"annual_fcst":177,"monthly_fcst":[0,16.7,28.6,38.2,13.1,44.2,0,0,10.7,11.9,14.2],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":157,"stock":9,"has_po":true,"net_order":148,"cartons":37,"order_cbm":2.0474,"order_cost":3332.96,"status":"LOW","category":"Completes"},{"sku":"ven-20-natural-raw-core-complete-8.5","desc":"Ven 20 Natural Raw Core Complete 8.5","cost_usd":22.52,"carton_qty":4,"cbm_carton":0.055335,"monthly_avgs":[0,2,2.5,2,3,4,4,4,8,15,8,9],"last12":104,"annual_fcst":125,"monthly_fcst":[8.3,8.3,16.5,31,16.5,18.6,0,4.1,5.2,4.1,6.2],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":118,"stock":0,"has_po":true,"net_order":118,"cartons":30,"order_cbm":1.6601,"order_cost":2702.4,"status":"OUT","category":"Completes"},{"sku":"ven-20-natural-raw-core-complete-7.75","desc":"Ven 20 Natural Raw Core Complete 7.75","cost_usd":21.86,"carton_qty":4,"cbm_carton":0.055335,"monthly_avgs":[0,0,0,0,4.1,0,0,5.5,3.5,0,5.5,9],"last12":59,"annual_fcst":71,"monthly_fcst":[0,13.8,8.8,0,13.8,22.5,0,0,0,0,10.3],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":54,"stock":33,"has_po":true,"net_order":21,"cartons":5,"order_cbm":0.2767,"order_cost":437.2,"status":"LOW","category":"Completes"},{"sku":"vnm-mid-galaxy","desc":"Vnm Mid Galaxy","cost_usd":21.19,"carton_qty":4,"cbm_carton":0.065772,"monthly_avgs":[2,2.5,3.5,5,6,10,7,10.5,9,0,12,31],"last12":51,"annual_fcst":61,"monthly_fcst":[4.4,6.6,5.7,0,7.5,19.5,1.3,1.6,2.2,3.1,3.8],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":56,"stock":120,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Completes"},{"sku":"vnm-catnip-MID","desc":"Vnm Catnip Mid","cost_usd":21.19,"carton_qty":4,"cbm_carton":0.065772,"monthly_avgs":[0,0,0,0,0,0,0,0,0,0,0,32],"last12":64,"annual_fcst":77,"monthly_fcst":[0,0,0,0,0,80,0,0,0,0,0],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":80,"stock":200,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Completes"},{"sku":"vnm-skullspots-teal-MID","desc":"Vnm Skullspots Teal Mid","cost_usd":21.19,"carton_qty":4,"cbm_carton":0.065772,"monthly_avgs":[0,0,0,0,0,0,0,0,0,0,0,0],"last12":0,"annual_fcst":0,"monthly_fcst":[0,0,0,0,0,0,0,0,0,0,0],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":0,"stock":67,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Completes"},{"sku":"vnm-sun-moon-black-MID","desc":"Vnm Sun Moon Black Mid","cost_usd":21.19,"carton_qty":4,"cbm_carton":0.065772,"monthly_avgs":[4.5,0,0,0,0,0,0,0,0,0,0,26.5],"last12":62,"annual_fcst":74,"monthly_fcst":[0,0,0,0,0,66.2,11.2,0,0,0,0],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":77,"stock":160,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Completes"},{"sku":"vnm-cat-pink-JNR","desc":"Vnm Cat Pink Jnr","cost_usd":20.52,"carton_qty":4,"cbm_carton":0.055335,"monthly_avgs":[0,0,0,0,0,0,0,0,0,0,0,29.5],"last12":59,"annual_fcst":71,"monthly_fcst":[0,0,0,0,0,73.8,0,0,0,0,0],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":74,"stock":404,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Completes"},{"sku":"vnm-kittypaw-purple-JNR","desc":"Vnm Kittypaw Purple Jnr","cost_usd":20.52,"carton_qty":4,"cbm_carton":0.055335,"monthly_avgs":[9,8,4.5,0,0,0,0,0,0,0,0,9.5],"last12":62,"annual_fcst":74,"monthly_fcst":[0,0,0,0,0,23.7,22.5,20,11.2,0,0],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":78,"stock":100,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Completes"},{"sku":"vnm-kittyswipe-blue-JNR","desc":"Vnm Kittyswipe Blue Jnr","cost_usd":20.52,"carton_qty":4,"cbm_carton":0.055335,"monthly_avgs":[0,0,0,0,0,0,0,0,0,0,0,29],"last12":58,"annual_fcst":70,"monthly_fcst":[0,0,0,0,0,72.5,0,0,0,0,0],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":72,"stock":200,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Completes"},{"sku":"vnm-skull-teal-JNR","desc":"Vnm Skull Teal Jnr","cost_usd":20.52,"carton_qty":4,"cbm_carton":0.055335,"monthly_avgs":[0,2.5,7.5,5,5.7,0,0,0,0,0,0,0],"last12":47,"annual_fcst":56,"monthly_fcst":[0,0,0,0,0,0,0,6.2,18.8,12.5,14.2],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":31,"stock":0,"has_po":true,"net_order":31,"cartons":8,"order_cbm":0.4427,"order_cost":656.64,"status":"OUT","category":"Completes"},{"sku":"vnm-skull-black-JNR","desc":"Vnm Skull Black Jnr","cost_usd":20.52,"carton_qty":4,"cbm_carton":0.055335,"monthly_avgs":[0,0,0,6.5,0,0,0,0,0,0,0,9.5],"last12":32,"annual_fcst":38,"monthly_fcst":[0,0,0,0,0,23.7,0,0,0,16.2,0],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":40,"stock":100,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Completes"},{"sku":"vnm-mid-doughnuts","desc":"Vnm Mid Doughnuts","cost_usd":19.65,"carton_qty":4,"cbm_carton":0.065772,"monthly_avgs":[2,3.5,5.5,4.5,1.3,4,4,5.5,0,3,6,8],"last12":28,"annual_fcst":34,"monthly_fcst":[2.9,4,0,2.2,4.4,5.8,1.5,2.6,4,3.3,1],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":33,"stock":0,"has_po":true,"net_order":33,"cartons":8,"order_cbm":0.5262,"order_cost":628.8,"status":"OUT","category":"Completes"},{"sku":"vnm-mid-fadeoutlines","desc":"Vnm Mid Fadeoutlines","cost_usd":19.65,"carton_qty":4,"cbm_carton":0.065772,"monthly_avgs":[5.5,5.5,4.5,3.5,3.7,7,6,9.5,0,0,6.5,11.5],"last12":45,"annual_fcst":54,"monthly_fcst":[5.2,8.2,0,0,5.6,10,4.8,4.8,3.9,3,3.2],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":50,"stock":0,"has_po":true,"net_order":50,"cartons":12,"order_cbm":0.7893,"order_cost":943.2,"status":"OUT","category":"Completes"},{"sku":"vnm-unicorn-flip-JNR","desc":"Vnm Unicorn Flip Jnr","cost_usd":18.99,"carton_qty":4,"cbm_carton":0.055335,"monthly_avgs":[0,0,0,0,0,0,0,0,0,0,0,25.5],"last12":51,"annual_fcst":61,"monthly_fcst":[0,0,0,0,0,63.7,0,0,0,0,0],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":64,"stock":200,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Completes"},{"sku":"vnm-jnr-desert-viper","desc":"Vnm Jnr Desert Viper","cost_usd":18.98,"carton_qty":4,"cbm_carton":0.055335,"monthly_avgs":[11.5,10,20,10,5.3,17,17,14,17.5,13.5,18,58],"last12":249,"annual_fcst":299,"monthly_fcst":[24.7,20.3,25.4,19.6,26.1,84.2,16.7,14.5,29,14.5,7.7],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":296,"stock":100,"has_po":true,"net_order":196,"cartons":49,"order_cbm":2.7114,"order_cost":3720.08,"status":"LOW","category":"Completes"},{"sku":"vnm-jnr-ice-fab","desc":"Vnm Jnr Ice Fab","cost_usd":18.98,"carton_qty":4,"cbm_carton":0.055335,"monthly_avgs":[3,8.5,11.5,24.5,19.9,15.5,12,5,8.5,10.5,43,73.5],"last12":282,"annual_fcst":338,"monthly_fcst":[17.2,7.2,12.2,15.1,61.7,105.5,4.3,12.2,16.5,35.2,28.5],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":296,"stock":101,"has_po":true,"net_order":195,"cartons":49,"order_cbm":2.7114,"order_cost":3720.08,"status":"LOW","category":"Completes"},{"sku":"vnm-jnr-melons","desc":"Vnm Jnr Melons","cost_usd":18.98,"carton_qty":4,"cbm_carton":0.055335,"monthly_avgs":[14,6.5,23,24.5,15.6,21.5,15,11.5,11.5,12,32,71.5],"last12":279,"annual_fcst":335,"monthly_fcst":[19.6,15,15,15.7,41.9,93.5,18.3,8.5,30.1,32.1,20.4],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":308,"stock":120,"has_po":true,"net_order":188,"cartons":47,"order_cbm":2.6007,"order_cost":3568.24,"status":"LOW","category":"Completes"},{"sku":"vnm-jnr-unicorn","desc":"Vnm Jnr Unicorn","cost_usd":18.98,"carton_qty":4,"cbm_carton":0.055335,"monthly_avgs":[17,16.5,29,39.5,45.4,48.5,56.5,55.5,47.5,3,70.5,174.5],"last12":375,"annual_fcst":450,"monthly_fcst":[42.3,41.6,35.6,2.2,52.8,130.7,12.7,12.4,21.7,29.6,34],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":401,"stock":412,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"LOW","category":"Completes"},{"sku":"vnm-unicorn-night-JNR","desc":"Vnm Unicorn Night Jnr","cost_usd":18.1,"carton_qty":4,"cbm_carton":0.055335,"monthly_avgs":[4,9,3.5,0,0,0,0,0,0,0,0,13],"last12":59,"annual_fcst":71,"monthly_fcst":[0,0,0,0,0,32.5,10,22.5,8.8,0,0],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":74,"stock":100,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Completes"},{"sku":"vnm_uc_BLT-raw-5.5","desc":"Vnm Uc Blt Raw 5.5","cost_usd":16.54,"carton_qty":20,"cbm_carton":0.03996,"monthly_avgs":[4,7,25.5,17.5,14.3,12.5,13,0,0,0,0,0],"last12":51,"annual_fcst":61,"monthly_fcst":[8.2,0,0,0,0,0,2.5,4.4,16.1,11,9],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":46,"stock":51,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"LOW","category":"Undercarriages"},{"sku":"vnm_uc_BLT-raw-5.25","desc":"Vnm Uc Blt Raw 5.25","cost_usd":16.34,"carton_qty":20,"cbm_carton":0.03996,"monthly_avgs":[17,10.5,14.5,10,36.1,25.5,26.5,32,22,45.5,40,64],"last12":444,"annual_fcst":533,"monthly_fcst":[40.7,49.1,33.8,69.9,61.4,98.3,26.1,16.1,22.3,15.4,55.5],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":444,"stock":282,"has_po":true,"net_order":162,"cartons":8,"order_cbm":0.3197,"order_cost":2614.4,"status":"LOW","category":"Undercarriages"},{"sku":"vnm_uc_BLT-raw-5.0","desc":"Vnm Uc Blt Raw 5.0","cost_usd":16.14,"carton_qty":20,"cbm_carton":0.03996,"monthly_avgs":[6.5,8,17.5,17,19.7,13.5,21,61,20.5,9.5,17,17],"last12":209,"annual_fcst":251,"monthly_fcst":[23.1,67,22.5,10.4,18.7,18.7,7.1,8.8,19.2,18.7,21.6],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":218,"stock":241,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Undercarriages"},{"sku":"vnm-deck-silver","desc":"Vnm Deck Silver","cost_usd":11.77,"carton_qty":10,"cbm_carton":0.035088,"monthly_avgs":[7,4.5,7.5,5,2.6,0,0,0,0,0,0,0],"last12":50,"annual_fcst":60,"monthly_fcst":[0,0,0,0,0,0,15.6,10,16.7,11.2,5.8],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":50,"stock":17,"has_po":true,"net_order":33,"cartons":3,"order_cbm":0.1053,"order_cost":353.1,"status":"LOW","category":"Decks"},{"sku":"vnm-deck-gold","desc":"Vnm Deck Gold","cost_usd":11.77,"carton_qty":10,"cbm_carton":0.035088,"monthly_avgs":[0,0,0,2.5,0,6,0,2.5,9,15.5,6.5,0],"last12":74,"annual_fcst":89,"monthly_fcst":[0,5.5,19.8,34.1,14.3,0,0,0,0,5.5,0],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":92,"stock":100,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Decks"},{"sku":"vnm-dragon-blue-MFS","desc":"Vnm Dragon Blue Mfs","cost_usd":10.6,"carton_qty":4,"cbm_carton":0.056133,"monthly_avgs":[0,0,0,0,0,0,0,0,0,0,0,34],"last12":68,"annual_fcst":82,"monthly_fcst":[0,0,0,0,0,85,0,0,0,0,0],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":85,"stock":200,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Completes"},{"sku":"vnm-football-blues-MFS","desc":"Vnm Football Blues Mfs","cost_usd":10.6,"carton_qty":4,"cbm_carton":0.056133,"monthly_avgs":[0,0,0,3.5,2.6,0,0,0,0,0,0,0],"last12":15,"annual_fcst":18,"monthly_fcst":[0,0,0,0,0,0,0,0,0,8.8,6.5],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":6,"stock":82,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Completes"},{"sku":"vnm-robodino-red-MFS","desc":"Vnm Robodino Red Mfs","cost_usd":10.6,"carton_qty":4,"cbm_carton":0.056133,"monthly_avgs":[0,0,0,0,0,0,0,0,0,0,0,38],"last12":76,"annual_fcst":91,"monthly_fcst":[0,0,0,0,0,95,0,0,0,0,0],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":95,"stock":200,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Completes"},{"sku":"vnm-football-reds-MFS","desc":"Vnm Football Reds Mfs","cost_usd":10.6,"carton_qty":4,"cbm_carton":0.056133,"monthly_avgs":[0,2.5,5,0,0,0,0,0,0,0,0,8],"last12":31,"annual_fcst":37,"monthly_fcst":[0,0,0,0,0,20,0,6.2,12.5,0,0],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":39,"stock":53,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Completes"},{"sku":"vnm-deck-mattblack","desc":"Vnm Deck Mattblack","cost_usd":9.74,"carton_qty":10,"cbm_carton":0.035088,"monthly_avgs":[0,2.5,2,3.5,1.3,0,3,3,3,5,0,0],"last12":27,"annual_fcst":32,"monthly_fcst":[4.2,4.2,4.2,7,0,0,0,3.5,2.8,4.9,1.9],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":30,"stock":100,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Decks"},{"sku":"vnm-deck-mattwhite","desc":"Vnm Deck Mattwhite","cost_usd":9.74,"carton_qty":10,"cbm_carton":0.035088,"monthly_avgs":[5,6.5,2.5,6,2.3,6,6,0,6.5,10,13,0],"last12":71,"annual_fcst":85,"monthly_fcst":[8.2,0,8.9,13.7,17.8,0,6.8,8.9,3.4,8.2,3.2],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":83,"stock":100,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Decks"},{"sku":"vnm_blank_black-8.25\"","desc":"Vnm Blank Black 8.25\"","cost_usd":9.72,"carton_qty":10,"cbm_carton":0.035088,"monthly_avgs":[5.5,7.5,6.5,17.5,3.3,2.5,4,2.5,0,0,0,0],"last12":55,"annual_fcst":66,"monthly_fcst":[5.4,3.4,0,0,0,0,7.4,10.1,8.8,23.6,4.5],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":60,"stock":0,"has_po":true,"net_order":60,"cartons":6,"order_cbm":0.2105,"order_cost":583.2,"status":"OUT","category":"Decks"},{"sku":"vnm_blank_black-8.5\"","desc":"Vnm Blank Black 8.5\"","cost_usd":9.72,"carton_qty":10,"cbm_carton":0.035088,"monthly_avgs":[0,4,0,0,4.1,0,2.5,0,0,0,0,0],"last12":17,"annual_fcst":21,"monthly_fcst":[4.3,0,0,0,0,0,0,6.9,0,0,7.1],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":8,"stock":32,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Decks"},{"sku":"vnm_blank_black-8.0\"","desc":"Vnm Blank Black 8.0\"","cost_usd":9.38,"carton_qty":10,"cbm_carton":0.035088,"monthly_avgs":[4.5,4.5,4,7,3.1,3,0,0,0,0,0,0],"last12":27,"annual_fcst":33,"monthly_fcst":[0,0,0,0,0,0,5.6,5.6,4.9,8.6,3.8],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":26,"stock":36,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Decks"},{"sku":"vnm_blank_nat-8.25\"","desc":"Vnm Blank Nat 8.25\"","cost_usd":9.38,"carton_qty":10,"cbm_carton":0.035088,"monthly_avgs":[10.5,9.5,9,0,4.7,3.5,5.5,8.5,5.5,5,7,9],"last12":56,"annual_fcst":67,"monthly_fcst":[4.8,7.4,4.8,4.4,6.1,7.9,9.2,8.3,7.9,0,4.1],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":62,"stock":100,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Decks"},{"sku":"vnm_blank_nat-8.5\"","desc":"Vnm Blank Nat 8.5\"","cost_usd":9.38,"carton_qty":10,"cbm_carton":0.037152,"monthly_avgs":[7,5.5,3.5,6.5,3.7,3.5,4.5,3,7.5,6,9.5,13],"last12":106,"annual_fcst":127,"monthly_fcst":[7.9,5.3,13.2,10.6,16.8,23,12.4,9.7,6.2,11.5,6.5],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":120,"stock":120,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"LOW","category":"Decks"},{"sku":"vnm_blank_nat-7.5\"","desc":"Vnm Blank Nat 7.5\"","cost_usd":8.72,"carton_qty":10,"cbm_carton":0.035088,"monthly_avgs":[0,0,0,0,3.6,4,4,0,0,0,0,0],"last12":11,"annual_fcst":13,"monthly_fcst":[4,0,0,0,0,0,0,0,0,0,3.7],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":6,"stock":38,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Decks"},{"sku":"vnm_blank_nat-7.75\"","desc":"Vnm Blank Nat 7.75\"","cost_usd":8.72,"carton_qty":10,"cbm_carton":0.035088,"monthly_avgs":[0,0,0,4,0,0,0,0,0,0,0,0],"last12":0,"annual_fcst":0,"monthly_fcst":[0,0,0,0,0,0,0,0,0,0,0],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":0,"stock":33,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Decks"},{"sku":"vnm_blank_nat-8.0\"","desc":"Vnm Blank Nat 8.0\"","cost_usd":8.72,"carton_qty":10,"cbm_carton":0.035088,"monthly_avgs":[7,10,17,60.5,29,42.5,12.5,17,11,4.5,37.5,16],"last12":150,"annual_fcst":180,"monthly_fcst":[8.4,11.4,7.4,3,25.2,10.8,4.7,6.7,11.4,40.7,19.5],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":148,"stock":240,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Decks"},{"sku":"vnm-premiumXLgiftpack","desc":"Vnm Premiumxlgiftpack","cost_usd":7.01,"carton_qty":4,"cbm_carton":0.025284,"monthly_avgs":[5.5,3,5,3.5,5.3,4,4,7.5,3.5,9.5,30,17],"last12":88,"annual_fcst":106,"monthly_fcst":[4.4,8.2,3.8,10.4,32.8,18.6,6,3.3,5.5,3.8,5.8],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":98,"stock":198,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Accessories"},{"sku":"venom-helmet-Small","desc":"Venom Helmet Small","cost_usd":6.05,"carton_qty":16,"cbm_carton":0.12879,"monthly_avgs":[17,13.5,35,39,32.1,30.5,31.5,33,16,7.5,36,69],"last12":379,"annual_fcst":455,"monthly_fcst":[39.7,41.6,20.2,9.5,45.4,87,21.4,17,44.1,49.2,40.5],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":394,"stock":190,"has_po":true,"net_order":204,"cartons":13,"order_cbm":1.6743,"order_cost":1258.4,"status":"LOW","category":"Helmets"},{"sku":"venom-helmet-Medium","desc":"Venom Helmet Medium","cost_usd":6.05,"carton_qty":16,"cbm_carton":0.12879,"monthly_avgs":[60.5,15,37,27,20.7,46,51,27.5,31,45.5,58,164],"last12":666,"annual_fcst":799,"monthly_fcst":[71.5,38.6,43.5,63.8,81.4,230,84.9,21,51.9,37.9,29],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":775,"stock":304,"has_po":true,"net_order":471,"cartons":29,"order_cbm":3.7349,"order_cost":2807.2,"status":"LOW","category":"Helmets"},{"sku":"venom-helmet-Large","desc":"Venom Helmet Large","cost_usd":6.05,"carton_qty":16,"cbm_carton":0.12879,"monthly_avgs":[33.5,28,49.5,44.5,27.1,43,42,30,13.5,19,18,49.5],"last12":516,"annual_fcst":620,"monthly_fcst":[65.9,47.1,21.2,29.8,28.3,77.7,52.6,44,77.7,69.9,42.5],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":560,"stock":0,"has_po":true,"net_order":560,"cartons":35,"order_cbm":4.5076,"order_cost":3388.0,"status":"OUT","category":"Helmets"},{"sku":"vnm-helmet-blue-small","desc":"Vnm Helmet Blue Small","cost_usd":6.05,"carton_qty":16,"cbm_carton":0.12879,"monthly_avgs":[0,0,3,0,0,0,0,0,0,0,0,0],"last12":6,"annual_fcst":7,"monthly_fcst":[0,0,0,0,0,0,0,0,7.5,0,0],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":8,"stock":111,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Helmets"},{"sku":"vnm-helmet-blue-medium","desc":"Vnm Helmet Blue Medium","cost_usd":6.05,"carton_qty":16,"cbm_carton":0.12879,"monthly_avgs":[0,3.5,5.5,6.5,5.2,0,0,0,0,0,0,0],"last12":46,"annual_fcst":56,"monthly_fcst":[0,0,0,0,0,0,0,8.7,13.7,16.2,12.9],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":32,"stock":17,"has_po":true,"net_order":15,"cartons":1,"order_cbm":0.1288,"order_cost":96.8,"status":"LOW","category":"Helmets"},{"sku":"vnm-helmet-pink-small","desc":"Vnm Helmet Pink Small","cost_usd":6.05,"carton_qty":16,"cbm_carton":0.12879,"monthly_avgs":[0,0,0,4.5,3.1,0,0,0,0,0,0,0],"last12":18,"annual_fcst":22,"monthly_fcst":[0,0,0,0,0,0,0,0,0,11.2,7.8],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":7,"stock":198,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Helmets"},{"sku":"vnm-helmet-pink-medium","desc":"Vnm Helmet Pink Medium","cost_usd":6.05,"carton_qty":16,"cbm_carton":0.12879,"monthly_avgs":[3,0,0,0,0,0,0,0,0,0,0,0],"last12":6,"annual_fcst":7,"monthly_fcst":[0,0,0,0,0,0,7.5,0,0,0,0],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":8,"stock":201,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Helmets"},{"sku":"vnm-helmet-red-small","desc":"Vnm Helmet Red Small","cost_usd":6.05,"carton_qty":16,"cbm_carton":0.12879,"monthly_avgs":[0,0,0,4.5,0,0,0,0,0,0,0,0],"last12":9,"annual_fcst":11,"monthly_fcst":[0,0,0,0,0,0,0,0,0,11.2,0],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":11,"stock":210,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Helmets"},{"sku":"vnm-helmet-red-medium","desc":"Vnm Helmet Red Medium","cost_usd":6.05,"carton_qty":16,"cbm_carton":0.12879,"monthly_avgs":[3,4.5,6,0,0,0,0,0,0,0,0,0],"last12":27,"annual_fcst":32,"monthly_fcst":[0,0,0,0,0,0,7.5,11.2,15,0,0],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":34,"stock":208,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Helmets"},{"sku":"venom-triplepads-junior","desc":"Venom Triplepads Junior","cost_usd":5.98,"carton_qty":35,"cbm_carton":0.11136,"monthly_avgs":[57,37.5,82.5,92,72.5,70,50.5,65.5,50.5,34.5,64,238.5],"last12":590,"annual_fcst":708,"monthly_fcst":[39.2,50.8,39.2,26.8,49.7,185,44.2,29.1,64,71.4,56.2],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":626,"stock":241,"has_po":true,"net_order":385,"cartons":11,"order_cbm":1.225,"order_cost":2302.3,"status":"LOW","category":"Pads"},{"sku":"venom-triplepads-adult","desc":"Venom Triplepads Adult","cost_usd":5.98,"carton_qty":35,"cbm_carton":0.11136,"monthly_avgs":[118.5,79.5,109.5,87,75.7,124,119,81,3.5,0,37.5,154],"last12":1003,"annual_fcst":1204,"monthly_fcst":[145.3,98.9,4.3,0,45.8,188,144.7,97.1,133.7,106.2,92.4],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":1069,"stock":432,"has_po":true,"net_order":637,"cartons":18,"order_cbm":2.0045,"order_cost":3767.4,"status":"LOW","category":"Pads"},{"sku":"vnm-triplepads-blueblack-jnr","desc":"Vnm Triplepads Blueblack Jnr","cost_usd":5.98,"carton_qty":35,"cbm_carton":0.11136,"monthly_avgs":[8,4,9.5,0,3.7,10.5,11.5,13.5,18,9.5,19.5,23],"last12":70,"annual_fcst":84,"monthly_fcst":[7.6,8.9,11.9,6.3,12.9,15.2,5.3,2.6,6.3,0,2.4],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":83,"stock":210,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Completes"},{"sku":"vnm-triplepads-blueblack-adt","desc":"Vnm Triplepads Blueblack Adt","cost_usd":5.98,"carton_qty":35,"cbm_carton":0.11136,"monthly_avgs":[5.5,0,2.5,0,3.1,0,0,4,9.5,12,12.5,11],"last12":92,"annual_fcst":111,"monthly_fcst":[0,7.5,17.8,22.5,23.4,20.6,10.3,0,4.7,0,5.8],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":104,"stock":41,"has_po":true,"net_order":63,"cartons":2,"order_cbm":0.2227,"order_cost":418.6,"status":"LOW","category":"Pads"},{"sku":"vnm-triplepads-pinkwhite-jnr","desc":"Vnm Triplepads Pinkwhite Jnr","cost_usd":5.98,"carton_qty":35,"cbm_carton":0.11136,"monthly_avgs":[4.5,0,8.5,0,6.7,10,14.5,10,12,4,24.5,32],"last12":70,"annual_fcst":84,"monthly_fcst":[9.8,6.7,8.1,2.7,16.5,21.5,3,0,5.7,0,4.5],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":78,"stock":210,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Completes"},{"sku":"vnm-triplepads-pinkwhite-adt","desc":"Vnm Triplepads Pinkwhite Adt","cost_usd":5.98,"carton_qty":35,"cbm_carton":0.11136,"monthly_avgs":[2.5,2.5,2.5,0,3.4,7.5,8.5,0,0,0,4.5,0],"last12":32,"annual_fcst":39,"monthly_fcst":[10.3,0,0,0,5.5,0,3,3,3,0,4.1],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":32,"stock":68,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Pads"},{"sku":"vnm-triplepads-redblack-jnr","desc":"Vnm Triplepads Redblack Jnr","cost_usd":5.98,"carton_qty":35,"cbm_carton":0.11136,"monthly_avgs":[0,4,7,0,6,9.5,11,8.5,12,9,26,23.5],"last12":54,"annual_fcst":65,"monthly_fcst":[6.2,4.8,6.8,5.1,14.7,13.3,0,2.3,4,0,3.4],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":61,"stock":210,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Completes"},{"sku":"vnm-triplepads-redblack-adt","desc":"Vnm Triplepads Redblack Adt","cost_usd":5.98,"carton_qty":35,"cbm_carton":0.11136,"monthly_avgs":[1.5,1.5,7,2.5,6,3.5,4.5,10,9.5,17.5,15,10.5],"last12":137,"annual_fcst":164,"monthly_fcst":[8.4,18.6,17.7,32.6,27.9,19.5,2.8,2.8,13,4.7,11.1],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":149,"stock":0,"has_po":true,"net_order":149,"cartons":4,"order_cbm":0.4454,"order_cost":837.2,"status":"OUT","category":"Pads"},{"sku":"vnm-premiumgiftpack","desc":"Vnm Premiumgiftpack","cost_usd":5.47,"carton_qty":4,"cbm_carton":0.025284,"monthly_avgs":[6.5,5.5,8.5,7.5,6.3,12,10,16,17.5,19.5,34.5,29.5],"last12":132,"annual_fcst":158,"monthly_fcst":[9.3,15,16.4,18.2,32.3,27.6,6.1,5.1,7.9,7,5.9],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":153,"stock":240,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Accessories"},{"sku":"vnm_bearings_gold","desc":"Vnm Bearings Gold","cost_usd":4.61,"carton_qty":128,"cbm_carton":0.003072,"monthly_avgs":[22.5,24,53.5,57,52.6,55,36.5,30.5,47,35.5,28,38],"last12":500,"annual_fcst":600,"monthly_fcst":[45,37.6,58,43.8,34.5,46.9,27.8,29.6,66,70.3,64.9],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":495,"stock":201,"has_po":true,"net_order":294,"cartons":2,"order_cbm":0.0061,"order_cost":1180.16,"status":"LOW","category":"Bearings"},{"sku":"vnm_artdeck_8.0","desc":"Vnm Artdeck 8.0","cost_usd":4.5,"carton_qty":10,"cbm_carton":0.035088,"monthly_avgs":[31.5,43.5,28,132,192.6,16.5,27.5,118,2.5,0,11.5,36],"last12":571,"annual_fcst":685,"monthly_fcst":[26.7,114.4,2.4,0,11.2,34.9,30.5,42.2,27.2,128,186.8],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":340,"stock":1485,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Decks"},{"sku":"swh_abec11","desc":"Swh Abec11","cost_usd":3.1,"carton_qty":100,"cbm_carton":0.0070875,"monthly_avgs":[21,10.5,10.5,18,7.3,17,19,23.5,30,49,26.5,29.5],"last12":327,"annual_fcst":392,"monthly_fcst":[29.3,36.2,46.2,75.4,40.8,45.4,32.3,16.2,16.2,27.7,11.3],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":386,"stock":400,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Bearings"},{"sku":"venom_abec11","desc":"Venom Abec11","cost_usd":3.1,"carton_qty":100,"cbm_carton":0.0070875,"monthly_avgs":[14.5,10.5,25,33.5,30.8,23,15.5,23.5,27.5,9,8.5,10.5],"last12":184,"annual_fcst":221,"monthly_fcst":[14.5,21.9,25.6,8.4,7.9,9.8,13.5,9.8,23.3,31.2,28.7],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":173,"stock":696,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Bearings"},{"sku":"swh_abec9","desc":"Swh Abec9","cost_usd":3,"carton_qty":100,"cbm_carton":0.008928,"monthly_avgs":[0,0,0,0,0,0,5,0,0,0,0,0],"last12":0,"annual_fcst":0,"monthly_fcst":[0,0,0,0,0,0,0,0,0,0,0],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":0,"stock":200,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Bearings"},{"sku":"venom_abec9","desc":"Venom Abec9","cost_usd":3,"carton_qty":100,"cbm_carton":0.0070875,"monthly_avgs":[57.5,48,100.5,108.5,99.9,80,79.5,65.5,92.5,107.5,67,72.5],"last12":1194,"annual_fcst":1433,"monthly_fcst":[115.3,95,134.2,155.9,97.2,105.1,83.4,69.6,145.8,157.4,144.9],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":1202,"stock":1761,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Bearings"},{"sku":"vnm_tc_wheels_54mm","desc":"Vnm Tc Wheels 54Mm","cost_usd":2.95,"carton_qty":50,"cbm_carton":0.024624,"monthly_avgs":[3.5,1.5,2,3,2.3,2.5,3,11,0,0,0,0],"last12":12,"annual_fcst":14,"monthly_fcst":[1.5,5.5,0,0,0,0,1.8,0.8,1,1.5,1.2],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":13,"stock":0,"has_po":true,"net_order":13,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OUT","category":"Wheels"},{"sku":"vnm_tc_wheels_56mm","desc":"Vnm Tc Wheels 56Mm","cost_usd":2.95,"carton_qty":50,"cbm_carton":0.024624,"monthly_avgs":[10,13,17.5,34.5,7.3,8.5,11,8,17.5,15,8.5,12.5],"last12":219,"annual_fcst":263,"monthly_fcst":[18,13.1,28.7,24.6,13.9,20.5,16.4,21.3,28.7,56.6,12],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":250,"stock":0,"has_po":true,"net_order":250,"cartons":5,"order_cbm":0.1231,"order_cost":737.5,"status":"OUT","category":"Wheels"},{"sku":"vnm_tc_wheels_58mm","desc":"Vnm Tc Wheels 58Mm","cost_usd":2.95,"carton_qty":50,"cbm_carton":0.024624,"monthly_avgs":[8,7,13,16.5,7,5.5,3,6,7.5,5,0,0],"last12":106,"annual_fcst":127,"monthly_fcst":[4.8,9.7,12.1,8.1,0,0,12.9,11.3,21,26.7,11.3],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":110,"stock":0,"has_po":true,"net_order":110,"cartons":2,"order_cbm":0.0492,"order_cost":295.0,"status":"OUT","category":"Wheels"},{"sku":"vnm_tc_wheels_60mm","desc":"Vnm Tc Wheels 60Mm","cost_usd":2.95,"carton_qty":50,"cbm_carton":0.024624,"monthly_avgs":[0,0,0,5.5,9.4,0,4.5,0,11,0,5,0],"last12":40,"annual_fcst":48,"monthly_fcst":[5.6,0,13.8,0,6.3,0,0,0,0,6.9,11.8],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":27,"stock":70,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Wheels"},{"sku":"vnm_tc_wheels_52mm","desc":"Vnm Tc Wheels 52Mm","cost_usd":2.79,"carton_qty":50,"cbm_carton":0.0225515,"monthly_avgs":[0,0,2,0,0,6,0,0,0,6,0,0],"last12":24,"annual_fcst":29,"monthly_fcst":[0,0,0,12.9,0,0,0,0,4.3,0,0],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":30,"stock":0,"has_po":true,"net_order":30,"cartons":1,"order_cbm":0.0226,"order_cost":139.5,"status":"OUT","category":"Wheels"},{"sku":"vnm-ultimategiftpack","desc":"Vnm Ultimategiftpack","cost_usd":2.73,"carton_qty":4,"cbm_carton":0.025284,"monthly_avgs":[2,4,7,4,7.7,11.5,5.5,12.5,12,16.5,47,106],"last12":285,"annual_fcst":342,"monthly_fcst":[8.2,18.6,17.8,24.5,69.9,157.7,3,5.9,10.4,5.9,11.4],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":334,"stock":432,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Accessories"},{"sku":"vnm_logo_wheel-52mm","desc":"Vnm Logo Wheel 52Mm","cost_usd":2.34,"carton_qty":50,"cbm_carton":0.024472,"monthly_avgs":[8,5.5,8,10.5,27.8,23.5,8.5,6.5,19,15,20.5,14],"last12":200,"annual_fcst":240,"monthly_fcst":[11.8,9,26.3,20.8,28.4,19.4,11.1,7.6,11.1,14.6,38.5],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":174,"stock":604,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Wheels"},{"sku":"venom-ttool-black","desc":"Venom Ttool Black","cost_usd":1.31,"carton_qty":200,"cbm_carton":0.0324,"monthly_avgs":[28.5,19.5,18,27,26,44.5,41.5,35.5,69,107,70,118],"last12":820,"annual_fcst":984,"monthly_fcst":[68.9,58.9,114.5,177.6,116.2,195.9,47.3,32.4,29.9,44.8,43.2],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":939,"stock":1200,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Tools"},{"sku":"ven_ttool","desc":"Ven Ttool","cost_usd":1.31,"carton_qty":200,"cbm_carton":0.0324,"monthly_avgs":[26.5,36,100,132,119.1,71,59.5,69.5,33.5,48.5,24.5,60],"last12":974,"annual_fcst":1169,"monthly_fcst":[86.3,100.8,48.6,70.3,35.5,87,38.4,52.2,145,191.5,172.7],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":872,"stock":622,"has_po":true,"net_order":250,"cartons":1,"order_cbm":0.0324,"order_cost":262.0,"status":"LOW","category":"Tools"},{"sku":"blackgrip-9x33","desc":"Blackgrip 9X33","cost_usd":1.15,"carton_qty":100,"cbm_carton":0.02236,"monthly_avgs":[41,43,55,106.5,75,79,61.5,53.5,29.5,54,50.5,85],"last12":645,"annual_fcst":774,"monthly_fcst":[64.3,55.9,30.8,56.5,52.8,88.9,42.9,45,57.5,111.4,78.4],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":650,"stock":2811,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Grip"},{"sku":"vnm-gt-clear","desc":"Vnm Gt Clear","cost_usd":1.15,"carton_qty":100,"cbm_carton":0.02236,"monthly_avgs":[44,46,93,68.5,75.6,55,62,64.5,68,69,36,55],"last12":804,"annual_fcst":964,"monthly_fcst":[80.4,83.7,88.2,89.5,46.7,71.4,57.1,59.7,120.7,88.9,98.1],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":809,"stock":3683,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Other"},{"sku":"venom-skate-lube","desc":"Venom Skate Lube","cost_usd":0.87,"carton_qty":500,"cbm_carton":0.075,"monthly_avgs":[26,26.5,20.5,28,54.7,92,64.5,65.5,61,82,103,137.5],"last12":768,"annual_fcst":922,"monthly_fcst":[78.5,79.7,74.3,99.8,125.4,167.4,31.7,32.3,25,34.1,66.6],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":826,"stock":2000,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Accessories"},{"sku":"ven-grip-cleaner","desc":"Ven Grip Cleaner","cost_usd":0.68,"carton_qty":500,"cbm_carton":0.0336375,"monthly_avgs":[37.5,17,30.5,44.5,53.1,16,34.5,22.5,14.5,29,19.5,44],"last12":576,"annual_fcst":692,"monthly_fcst":[63.9,41.6,26.8,53.7,36.1,81.4,69.4,31.5,56.5,82.4,98.3],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":524,"stock":703,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Grip"},{"sku":"ven_hardware","desc":"Ven Hardware","cost_usd":0.5,"carton_qty":250,"cbm_carton":0.022528,"monthly_avgs":[14,17,18.5,16.5,26.5,20,30,24.5,57,22,26,26],"last12":385,"annual_fcst":463,"monthly_fcst":[46.4,37.9,88.2,34.1,40.3,40.3,21.7,26.3,28.6,25.5,41],"months":["Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"],"demand":400,"stock":1719,"has_po":true,"net_order":0,"cartons":0,"order_cbm":0.0,"order_cost":0.0,"status":"OK","category":"Accessories"}],"summary":{"total_skus":78,"need_order":29,"total_cbm":32.9,"total_cost":47154.58,"total_cartons":450,"container_20ft_cbm":25,"container_40ft_cbm":55}};
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+let activeFilter = 'all';
+let searchTerm = '';
+let sortKey = 'net_order_desc';
+let catFilter = '';
+
+// Populate category filter
+const cats = [...new Set(RAW.skus.map(s => s.category))].sort();
+const catSel = document.getElementById('cat-filter');
+cats.forEach(c => {
+  const o = document.createElement('option');
+  o.value = c; o.textContent = c;
+  catSel.appendChild(o);
+});
+
+function fmt(n, dec=0) {
+  if (n == null || n === '') return '—';
+  return Number(n).toLocaleString('en-GB', {minimumFractionDigits: dec, maximumFractionDigits: dec});
+}
+
+function sparkline(avgs) {
+  const max = Math.max(...avgs, 1);
+  return '<div class="sparkline">' + avgs.map((v,i) => {
+    const h = Math.max(2, Math.round((v/max)*22));
+    const isPeak = v === max && v > 0;
+    return `<div class="spark-bar${isPeak?' peak':''}" style="height:${h}px" title="${MONTHS_SHORT[i]}: ${v}"></div>`;
+  }).join('') + '</div>';
+}
+
+function getStatus(s) {
+  if (s.net_order > 0 && s.stock === 0) return 'OUT';
+  if (s.net_order > 0 && s.stock > 0) return 'LOW';
+  if (s.net_order === 0 && s.stock < s.demand * 0.3 && s.demand > 0) return 'TIGHT';
+  return 'OK';
+}
+
+function renderSummary(filtered) {
+  const needOrder = filtered.filter(s => s.net_order > 0);
+  const totalCbm = needOrder.reduce((a,s) => a + s.order_cbm, 0).toFixed(1);
+  const totalCost = needOrder.reduce((a,s) => a + s.order_cost, 0);
+  const totalCartons = needOrder.reduce((a,s) => a + s.cartons, 0);
+  const outOfStock = filtered.filter(s => getStatus(s) === 'OUT').length;
+
+  document.getElementById('summary-cards').innerHTML = `
+    <div class="card">
+      <div class="card-label">SKUs shown</div>
+      <div class="card-value blue">${filtered.length}</div>
+      <div class="card-sub">of ${RAW.skus.length} total</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Need Ordering</div>
+      <div class="card-value orange">${needOrder.length}</div>
+      <div class="card-sub">${outOfStock} fully out of stock</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Total CBM</div>
+      <div class="card-value ${totalCbm > 55 ? 'red' : totalCbm > 25 ? 'orange' : 'green'}">${totalCbm}</div>
+      <div class="card-sub">m³ to order</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Total Cartons</div>
+      <div class="card-value">${fmt(totalCartons)}</div>
+      <div class="card-sub">across ${needOrder.length} SKUs</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Order Cost</div>
+      <div class="card-value orange">$${(totalCost/1000).toFixed(1)}k</div>
+      <div class="card-sub">USD ex-factory</div>
+    </div>
+  `;
+
+  // Container bars
+  const CBM_20FT = 25, CBM_40FT = 55;
+  const cbm = parseFloat(totalCbm);
+
+  // 20ft bar
+  const pct20 = Math.min((cbm / CBM_20FT) * 100, 100);
+  const fill20 = document.getElementById('fill-20ft');
+  fill20.style.width = pct20 + '%';
+  fill20.className = 'container-bar-fill ' + (cbm <= CBM_20FT ? 'green' : 'red');
+  document.getElementById('fill-20ft-text').textContent = cbm <= CBM_20FT ? `${cbm} CBM` : `${cbm} CBM — overflow`;
+  document.getElementById('stat-20ft-cbm').textContent = cbm.toFixed(1);
+  document.getElementById('stat-20ft-pct').textContent = Math.round((cbm / CBM_20FT) * 100) + '%';
+  document.getElementById('stat-20ft-rem').textContent = cbm <= CBM_20FT ? (CBM_20FT - cbm).toFixed(1) : '0';
+  const v20 = document.getElementById('verdict-20ft');
+  if (cbm <= CBM_20FT) {
+    v20.innerHTML = `<span class="verdict-fits">✅ Fits — ${(CBM_20FT - cbm).toFixed(1)} CBM spare</span>`;
+    document.getElementById('block-20ft').classList.add('active-container');
+    document.getElementById('block-40ft').classList.remove('active-container');
+  } else {
+    v20.innerHTML = `<span class="verdict-over">✗ Over by ${(cbm - CBM_20FT).toFixed(1)} CBM — won't fit</span>`;
+    document.getElementById('block-20ft').classList.remove('active-container');
+  }
+
+  // 40ft bar
+  const pct40 = Math.min((cbm / CBM_40FT) * 100, 100);
+  const fill40 = document.getElementById('fill-40ft');
+  fill40.style.width = pct40 + '%';
+  fill40.className = 'container-bar-fill ' + (cbm <= CBM_40FT ? (cbm <= CBM_20FT ? 'green' : 'orange') : 'red');
+  document.getElementById('fill-40ft-text').textContent = `${cbm} CBM`;
+  document.getElementById('stat-40ft-cbm').textContent = cbm.toFixed(1);
+  document.getElementById('stat-40ft-pct').textContent = Math.round((cbm / CBM_40FT) * 100) + '%';
+  document.getElementById('stat-40ft-rem').textContent = cbm <= CBM_40FT ? (CBM_40FT - cbm).toFixed(1) : '0';
+  const v40 = document.getElementById('verdict-40ft');
+  if (cbm <= CBM_40FT) {
+    const spare = (CBM_40FT - cbm).toFixed(1);
+    v40.innerHTML = `<span class="verdict-fits">✅ Fits — ${spare} CBM spare (${Math.round((spare/CBM_40FT)*100)}% headroom)</span>`;
+    if (cbm > CBM_20FT) document.getElementById('block-40ft').classList.add('active-container');
+  } else {
+    v40.innerHTML = `<span class="verdict-over">✗ Over by ${(cbm - CBM_40FT).toFixed(1)} CBM — split order needed</span>`;
+    document.getElementById('block-40ft').classList.remove('active-container');
+  }
+
+  // Landed cost estimates (order cost + mid-range freight)
+  // 20ft: mid of $1,100–$4,650 ≈ $2,875 | 40ft: mid of $1,850–$6,060 ≈ $3,955
+  const MID_FREIGHT_20 = 2875, MID_FREIGHT_40 = 3955;
+  const el20 = document.getElementById('landed-20ft-val');
+  const el40 = document.getElementById('landed-40ft-val');
+  if (totalCost > 0) {
+    el20.textContent = '$' + ((totalCost + MID_FREIGHT_20) / 1000).toFixed(1) + 'k USD';
+    el40.textContent = '$' + ((totalCost + MID_FREIGHT_40) / 1000).toFixed(1) + 'k USD';
+  } else {
+    el20.textContent = '—';
+    el40.textContent = '—';
+  }
+}
+
+function renderTable(filtered) {
+  const tbody = document.getElementById('table-body');
+  const empty = document.getElementById('empty-state');
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  const totCbm = filtered.filter(s=>s.net_order>0).reduce((a,s)=>a+s.order_cbm,0);
+  const totCost = filtered.filter(s=>s.net_order>0).reduce((a,s)=>a+s.order_cost,0);
+  const totCartons = filtered.filter(s=>s.net_order>0).reduce((a,s)=>a+s.cartons,0);
+
+  tbody.innerHTML = filtered.map(s => {
+    const status = getStatus(s);
+    const hasPO = s.has_po;
+    const stockHtml = `<div class="stock-cell">${fmt(s.stock)}${hasPO ? '<span class="po-tag">+PO</span>' : ''}</div>`;
+    return `<tr>
+      <td><span class="badge badge-${status}">${status}</span></td>
+      <td><span class="cat-tag">${s.category}</span></td>
+      <td>
+        <div class="td-sku">${s.sku}</div>
+        <div class="td-desc">${s.desc}</div>
+      </td>
+      <td class="td-num">${sparkline(s.monthly_avgs)}</td>
+      <td class="td-num">${stockHtml}</td>
+      <td class="td-num">${fmt(s.demand)}</td>
+      <td class="td-num ${s.net_order > 0 ? 'highlight' : 'green'}">${s.net_order > 0 ? fmt(s.net_order) : '✓ Covered'}</td>
+      <td class="td-num">${s.cartons > 0 ? fmt(s.cartons) : '—'}</td>
+      <td class="td-num">${s.order_cbm > 0 ? fmt(s.order_cbm, 2) : '—'}</td>
+      <td class="td-num">${s.order_cost > 0 ? '$' + fmt(s.order_cost, 0) : '—'}</td>
+    </tr>`;
+  }).join('') + `<tr style="border-top:2px solid #2a2a4a;background:#13131f">
+    <td colspan="6" style="padding:10px 12px;font-weight:600;color:#6b7280;font-size:12px">TOTALS (filtered)</td>
+    <td class="td-num highlight" style="font-weight:700">${fmt(filtered.filter(s=>s.net_order>0).reduce((a,s)=>a+s.net_order,0))}</td>
+    <td class="td-num" style="font-weight:700">${fmt(totCartons)}</td>
+    <td class="td-num" style="font-weight:700">${fmt(totCbm,2)}</td>
+    <td class="td-num orange" style="font-weight:700">$${fmt(totCost,0)}</td>
+  </tr>`;
+
+  document.getElementById('results-count').textContent = `Showing ${filtered.length} SKUs`;
+}
+
+function applyFilters() {
+  let data = [...RAW.skus];
+
+  // Search
+  if (searchTerm) {
+    const t = searchTerm.toLowerCase();
+    data = data.filter(s => s.sku.toLowerCase().includes(t) || s.desc.toLowerCase().includes(t));
+  }
+
+  // Category
+  if (catFilter) data = data.filter(s => s.category === catFilter);
+
+  // Status filter
+  if (activeFilter === 'order') data = data.filter(s => s.net_order > 0);
+  else if (activeFilter === 'OUT') data = data.filter(s => getStatus(s) === 'OUT');
+  else if (activeFilter === 'OK') data = data.filter(s => getStatus(s) === 'OK');
+
+  // Sort
+  const [key, dir] = sortKey.split('_');
+  const mult = dir === 'desc' ? -1 : 1;
+  data.sort((a, b) => {
+    let av = a[key] ?? a.net_order, bv = b[key] ?? b.net_order;
+    if (key === 'sku' || key === 'category') return mult * String(av).localeCompare(String(bv));
+    return mult * (av - bv);
+  });
+
+  renderSummary(data);
+  renderTable(data);
+}
+
+// Event listeners
+document.getElementById('search').addEventListener('input', e => {
+  searchTerm = e.target.value;
+  applyFilters();
+});
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    applyFilters();
+  });
+});
+
+document.getElementById('sort-select').addEventListener('change', e => {
+  sortKey = e.target.value;
+  applyFilters();
+});
+
+document.getElementById('cat-select') && document.getElementById('cat-select').addEventListener('change', e => {
+  catFilter = e.target.value;
+  applyFilters();
+});
+document.getElementById('cat-filter').addEventListener('change', e => {
+  catFilter = e.target.value;
+  applyFilters();
+});
+
+// Initial render
+applyFilters();
+</script>
+</body>
+</html>
