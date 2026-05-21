@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Venom Skateboards — Container Forecast</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <style>
   #vessel-map { background: #1a1a2e; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -675,71 +675,83 @@ document.getElementById('token-modal').addEventListener('click', function(e) {
 </script>
 
 <!-- Leaflet vessel map -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN2GqnA=" crossorigin=""></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-(function() {
-  var map = L.map('vessel-map', { zoomControl: true, attributionControl: false }).setView([30, 45], 3);
+window.addEventListener('load', function() {
+  var el = document.getElementById('vessel-map');
+  if (!el || typeof L === 'undefined') return;
 
-  // Dark tile layer (CartoDB Dark Matter)
+  var map = L.map('vessel-map', {
+    zoomControl: true,
+    attributionControl: false,
+    scrollWheelZoom: false
+  }).setView([25, 55], 2);
+
+  // Dark tile layer (CartoDB Dark Matter — always embeddable)
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    subdomains: 'abcd', maxZoom: 14
+    subdomains: 'abcd',
+    maxZoom: 14
   }).addTo(map);
 
-  // Route: Yantian → Singapore → through Malacca → Indian Ocean → Aden → Suez → Med → Gibraltar → Rotterdam
+  // Full route waypoints
   var route = [
-    [22.60, 114.40],  // Yantian, China
+    [22.60, 114.40],  // Yantian
     [1.26,  103.82],  // Singapore
-    [5.42,   98.68],  // Malacca Strait N
-    [-5.0,   80.0],   // Indian Ocean
-    [11.60,  43.15],  // Gulf of Aden / Djibouti
-    [12.60,  43.50],  // Red Sea entry
-    [27.5,   34.0],   // Red Sea N
+    [5.42,   98.68],  // Malacca Strait
+    [-5.0,   80.0 ],  // Indian Ocean
+    [11.60,  43.15],  // Gulf of Aden
+    [12.60,  43.50],  // Red Sea S
+    [27.5,   34.0 ],  // Red Sea N
     [30.02,  32.57],  // Suez Canal
-    [31.25,  32.30],  // Port Said / Med entry
+    [31.25,  32.30],  // Port Said
     [35.90,  14.52],  // Malta
-    [37.90,  15.55],  // Sicily
     [36.14,  -5.36],  // Gibraltar
     [45.80,  -9.00],  // Bay of Biscay
     [51.90,   4.50],  // Rotterdam
   ];
 
-  // Draw route polyline
-  L.polyline(route, { color: '#f97316', weight: 2.5, opacity: 0.8, dashArray: '6,4' }).addTo(map);
+  L.polyline(route, { color: '#f97316', weight: 2.5, opacity: 0.85, dashArray: '7,5' }).addTo(map);
 
-  // ── Estimated current position ──
-  // Departed Yantian ~5 May 2026. ETA Rotterdam 29 May 2026. Today: 21 May 2026.
-  // Total voyage ~24 days. Days elapsed: ~16 days (~67% complete).
-  // At ~67% along the route → approximately in the Central Mediterranean (near Malta/Sicily)
-  var shipLat = 37.1, shipLng = 12.0;
-
-  // Custom ship icon
+  // Ship position — ~67% of voyage complete (departed May 5, ETA May 29, today May 21)
   var shipIcon = L.divIcon({
-    html: '<div style="font-size:20px;line-height:1;filter:drop-shadow(0 0 4px #f97316);">🚢</div>',
+    html: '<div style="font-size:22px;line-height:1;text-shadow:0 0 6px #f97316,0 0 12px #f97316;">🚢</div>',
     className: '',
-    iconAnchor: [10, 10]
+    iconSize: [22, 22],
+    iconAnchor: [11, 11]
   });
 
-  L.marker([shipLat, shipLng], { icon: shipIcon })
+  L.marker([36.5, 10.0], { icon: shipIcon })
     .addTo(map)
-    .bindPopup('<b>CMA CGM MEKONG</b><br>Est. position · 21 May 2026<br>ETA Rotterdam: 29 May 2026', { className: 'vessel-popup' })
+    .bindPopup(
+      '<div style="background:#1e293b;color:#e2e8f0;padding:6px 10px;border-radius:6px;font-size:12px;font-family:sans-serif;line-height:1.6;min-width:180px;">' +
+      '<b style="color:#f97316;">CMA CGM MEKONG</b><br>' +
+      'Estimated position · 21 May 2026<br>' +
+      '<span style="color:#94a3b8;">ETA Rotterdam: 29 May 2026</span></div>',
+      { className: 'vessel-popup-plain', maxWidth: 220 }
+    )
     .openPopup();
 
-  // Port markers
-  var portIcon = function(label) {
+  // Port labels
+  function portLabel(text) {
     return L.divIcon({
-      html: '<div style="background:#1e293b;border:1px solid #475569;color:#94a3b8;font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;white-space:nowrap;">' + label + '</div>',
+      html: '<div style="background:rgba(15,15,19,0.85);border:1px solid #374151;color:#9ca3af;font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;white-space:nowrap;letter-spacing:0.5px;">' + text + '</div>',
       className: '',
-      iconAnchor: [20, 8]
+      iconAnchor: [24, -4]
     });
-  };
-  L.marker([22.60, 114.40], { icon: portIcon('YANTIAN') }).addTo(map);
-  L.marker([51.90,   4.50], { icon: portIcon('ROTTERDAM') }).addTo(map);
+  }
+  L.marker([22.60, 114.40], { icon: portLabel('YANTIAN') }).addTo(map);
+  L.marker([51.90,  4.50],  { icon: portLabel('ROTTERDAM') }).addTo(map);
 
-  // Custom popup style
-  var style = document.createElement('style');
-  style.textContent = '.vessel-popup .leaflet-popup-content-wrapper { background:#1e293b; color:#e2e8f0; border:1px solid #475569; border-radius:6px; font-size:12px; } .vessel-popup .leaflet-popup-tip { background:#1e293b; }';
-  document.head.appendChild(style);
-})();
+  // Suppress default popup wrapper styles
+  var s = document.createElement('style');
+  s.textContent = '.vessel-popup-plain .leaflet-popup-content-wrapper{background:transparent;box-shadow:none;padding:0;border-radius:0;}' +
+                  '.vessel-popup-plain .leaflet-popup-tip-container{display:none;}' +
+                  '.vessel-popup-plain .leaflet-popup-content{margin:0;}';
+  document.head.appendChild(s);
+
+  // Force repaint after container is fully laid out
+  setTimeout(function() { map.invalidateSize(); }, 300);
+});
 </script>
 </body>
 </html>
