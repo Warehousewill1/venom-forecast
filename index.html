@@ -29,10 +29,12 @@
   .card-value.red { color: #ef4444; }
   .card-sub { font-size: 12px; color: #6b7280; margin-top: 4px; }
 
-  /* Container fill bars */
-  .container-bar-wrap { padding: 0 28px 20px; }
+  /* Shipment row — container fills + tracker side by side */
+  .shipment-row { display: grid; grid-template-columns: 5fr 7fr; gap: 16px; padding: 0 28px 20px; align-items: start; }
+  .shipment-left { display: flex; flex-direction: column; }
+  .shipment-right { display: flex; flex-direction: column; }
+  .container-stack { display: flex; flex-direction: column; gap: 10px; }
   .container-section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: #6b7280; margin-bottom: 10px; }
-  .container-bars { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .container-block { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 10px; padding: 14px 16px; }
   .container-block.active-container { border-color: #f97316; box-shadow: 0 0 0 1px #f9731640; }
   .container-block-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
@@ -59,8 +61,7 @@
   .freight-source { font-size: 10px; color: #374151; margin-top: 5px; font-style: italic; }
 
   /* Vessel tracker */
-  .vessel-wrap { padding: 0 28px 20px; }
-  .vessel-block { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 10px; overflow: hidden; }
+  .vessel-block { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
   .vessel-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px 10px; border-bottom: 1px solid #1f1f35; flex-wrap: wrap; gap: 8px; }
   .vessel-title { display: flex; align-items: center; gap: 8px; }
   .vessel-title h3 { font-size: 13px; font-weight: 700; color: #fff; }
@@ -72,7 +73,7 @@
   .vessel-stat-value { font-size: 12px; font-weight: 600; color: #e8e8f0; margin-top: 1px; }
   .vessel-stat-value.highlight { color: #f97316; }
   .vessel-stat-value.blue { color: #60a5fa; }
-  .vessel-map { width: 100%; height: 260px; border: none; display: block; }
+  .vessel-map { width: 100%; height: 0; flex: 1; min-height: 230px; border: none; display: block; }
   .vessel-footer { padding: 6px 16px; font-size: 10px; color: #374151; display: flex; justify-content: space-between; align-items: center; }
   .vessel-footer a { color: #4b5563; text-decoration: none; }
   .vessel-footer a:hover { color: #60a5fa; }
@@ -195,9 +196,10 @@
 
 <div class="summary" id="summary-cards"></div>
 
-<div class="container-bar-wrap">
-  <div class="container-section-label">Container fill estimate</div>
-  <div class="container-bars">
+<div class="shipment-row">
+  <div class="shipment-left">
+    <div class="container-section-label">Container fill estimate</div>
+    <div class="container-stack">
     <!-- 20ft -->
     <div class="container-block" id="block-20ft">
       <div class="container-block-header">
@@ -264,12 +266,11 @@
         <div class="freight-source">Freightos marketplace + forwarder quotes · Ningbo→Southampton · May 2026</div>
       </div>
     </div>
+    </div>
   </div>
-</div>
-
-<div class="vessel-wrap">
-  <div class="container-section-label">Live container shipment tracker</div>
-  <div class="vessel-block">
+  <div class="shipment-right">
+    <div class="container-section-label">Live shipment tracker</div>
+    <div class="vessel-block">
     <div class="vessel-header">
       <div class="vessel-title">
         <span class="ship-icon">🚢</span>
@@ -303,6 +304,7 @@
     <div class="vessel-footer">
       <span>Estimated position · route via Suez Canal · ETA Rotterdam 29 May 2026</span>
       <a href="https://www.vesselfinder.com/vessels/details/9718105" target="_blank" rel="noopener">Track on VesselFinder ↗</a>
+    </div>
     </div>
   </div>
 </div>
