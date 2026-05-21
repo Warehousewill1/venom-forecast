@@ -56,6 +56,25 @@
   .freight-row.freight-landed .freight-val { color: #60a5fa; }
   .freight-source { font-size: 10px; color: #374151; margin-top: 5px; font-style: italic; }
 
+  /* Vessel tracker */
+  .vessel-wrap { padding: 0 28px 20px; }
+  .vessel-block { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 10px; overflow: hidden; }
+  .vessel-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px 12px; border-bottom: 1px solid #1f1f35; flex-wrap: wrap; gap: 10px; }
+  .vessel-title { display: flex; align-items: center; gap: 10px; }
+  .vessel-title h3 { font-size: 14px; font-weight: 700; color: #fff; }
+  .vessel-title .ship-icon { font-size: 18px; }
+  .vessel-pill { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: #052e16; color: #22c55e; border: 1px solid #14532d; letter-spacing: 0.4px; }
+  .vessel-stats { display: flex; gap: 24px; flex-wrap: wrap; }
+  .vessel-stat { display: flex; flex-direction: column; }
+  .vessel-stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.7px; color: #6b7280; }
+  .vessel-stat-value { font-size: 13px; font-weight: 600; color: #e8e8f0; margin-top: 2px; }
+  .vessel-stat-value.highlight { color: #f97316; }
+  .vessel-stat-value.blue { color: #60a5fa; }
+  .vessel-map { width: 100%; height: 380px; border: none; display: block; }
+  .vessel-footer { padding: 8px 18px; font-size: 10px; color: #374151; display: flex; justify-content: space-between; align-items: center; }
+  .vessel-footer a { color: #4b5563; text-decoration: none; }
+  .vessel-footer a:hover { color: #60a5fa; }
+
   /* Controls */
   .controls { padding: 0 28px 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   .search-box { flex: 1; min-width: 200px; max-width: 320px; background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 8px; padding: 8px 14px; color: #e8e8f0; font-size: 13px; outline: none; }
@@ -242,6 +261,52 @@
         </div>
         <div class="freight-source">Freightos marketplace + forwarder quotes · Ningbo→Southampton · May 2026</div>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="vessel-wrap">
+  <div class="container-section-label">Live container shipment tracker</div>
+  <div class="vessel-block">
+    <div class="vessel-header">
+      <div class="vessel-title">
+        <span class="ship-icon">🚢</span>
+        <h3>CMA CGM MEKONG</h3>
+        <span class="vessel-pill">● UNDER WAY</span>
+      </div>
+      <div class="vessel-stats">
+        <div class="vessel-stat">
+          <span class="vessel-stat-label">Voyage</span>
+          <span class="vessel-stat-value">0R106W1MA</span>
+        </div>
+        <div class="vessel-stat">
+          <span class="vessel-stat-label">From</span>
+          <span class="vessel-stat-value">Yantian, China</span>
+        </div>
+        <div class="vessel-stat">
+          <span class="vessel-stat-label">Destination</span>
+          <span class="vessel-stat-value blue">Rotterdam (NLRTTM)</span>
+        </div>
+        <div class="vessel-stat">
+          <span class="vessel-stat-label">ETA</span>
+          <span class="vessel-stat-value highlight">29 May 2026</span>
+        </div>
+        <div class="vessel-stat">
+          <span class="vessel-stat-label">IMO / MMSI</span>
+          <span class="vessel-stat-value">9718105 / 256108000</span>
+        </div>
+      </div>
+    </div>
+    <iframe
+      class="vessel-map"
+      src="https://www.vesselfinder.com/emap/?mmsi=256108000&width=1200&height=380&zoom=3&track=1"
+      title="CMA CGM MEKONG live position"
+      loading="lazy"
+      allowfullscreen>
+    </iframe>
+    <div class="vessel-footer">
+      <span>Live AIS position via VesselFinder · updates automatically</span>
+      <a href="https://www.vesselfinder.com/vessels/details/9718105" target="_blank" rel="noopener">Open in VesselFinder ↗</a>
     </div>
   </div>
 </div>
