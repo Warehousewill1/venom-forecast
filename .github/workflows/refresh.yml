@@ -41,9 +41,6 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git stash
-          git pull --rebase origin main
-          git stash pop
           git add index.html
           git diff --cached --quiet || git commit -m "chore: refresh Venom stock $(date -u +'%Y-%m-%d')"
           git push
