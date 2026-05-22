@@ -834,11 +834,11 @@ document.getElementById('token-modal').addEventListener('click', function(e) {
 
 function downloadFactoryCSV() {
   const toOrder = RAW.skus.filter(s => s.net_order > 0);
-  const rows = [['SKU', 'Title', 'True Need', 'MOQ', 'Order Qty']];
+  const rows = [['SKU', 'Title', 'QTY']];
   toOrder.forEach(s => {
     const m = moqCalc(s);
     const title = s.desc.replace(/"/g, '""');
-    rows.push([s.sku, `"${title}"`, s.net_order, m.moq, m.order_qty]);
+    rows.push([s.sku, `"${title}"`, m.order_qty]);
   });
   const csv = rows.map(r => r.join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
