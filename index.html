@@ -275,6 +275,39 @@
         <div class="freight-source">Freightos marketplace + forwarder quotes · Ningbo→Southampton · May 2026</div>
       </div>
     </div>
+    <!-- 40ft HQ -->
+    <div class="container-block" id="block-40hq">
+      <div class="container-block-header">
+        <span class="container-block-title">🚢 40ft HQ Container</span>
+        <span class="container-block-capacity">Capacity: ~76 CBM</span>
+      </div>
+      <div class="container-bar-bg">
+        <div class="container-bar-fill" id="fill-40hq" style="width:0%">
+          <span id="fill-40hq-text"></span>
+        </div>
+      </div>
+      <div class="container-stats">
+        <div class="container-stat"><span class="val" id="stat-40hq-cbm">—</span> <span class="lbl">CBM used</span></div>
+        <div class="container-stat"><span class="val" id="stat-40hq-pct">—</span> <span class="lbl">full</span></div>
+        <div class="container-stat"><span class="val" id="stat-40hq-rem">—</span> <span class="lbl">CBM remaining</span></div>
+      </div>
+      <div class="container-verdict" id="verdict-40hq"></div>
+      <div class="freight-info">
+        <div class="freight-row">
+          <span class="freight-lbl">Est. freight</span>
+          <span class="freight-val">~$4,200</span>
+        </div>
+        <div class="freight-row">
+          <span class="freight-lbl">Transit time</span>
+          <span class="freight-val">~42 days</span>
+        </div>
+        <div class="freight-row freight-landed">
+          <span class="freight-lbl">Landed est. (order + freight)</span>
+          <span class="freight-val" id="landed-40hq-val">—</span>
+        </div>
+        <div class="freight-source">Freightos marketplace + forwarder quotes · Ningbo→Southampton · May 2026</div>
+      </div>
+    </div>
     </div>
   </div>
   <div class="shipment-right">
@@ -369,7 +402,7 @@
 
 <div class="footer">
   <span>🟠 Orange stock = live stock + PO30032644319 incoming · 🟡 Yellow = live stock only</span>
-  <span>Container sizes: 20ft ≈ 25 CBM · 40ft ≈ 55 CBM</span>
+  <span>Container sizes: 20ft ≈ 25 CBM · 40ft ≈ 55 CBM · 40ft HQ ≈ 76 CBM</span>
 </div>
 
 <script>
@@ -472,7 +505,7 @@ function renderSummary(filtered) {
   `;
 
   // Container bars
-  const CBM_20FT = 25, CBM_40FT = 55;
+  const CBM_20FT = 25, CBM_40FT = 55, CBM_40HQ = 76;
   const cbm = parseFloat(totalCbm);
 
   // 20ft bar
@@ -489,6 +522,7 @@ function renderSummary(filtered) {
     v20.innerHTML = `<span class="verdict-fits">✅ Fits — ${(CBM_20FT - cbm).toFixed(1)} CBM spare</span>`;
     document.getElementById('block-20ft').classList.add('active-container');
     document.getElementById('block-40ft').classList.remove('active-container');
+    document.getElementById('block-40hq').classList.remove('active-container');
   } else {
     v20.innerHTML = `<span class="verdict-over">✗ Over by ${(cbm - CBM_20FT).toFixed(1)} CBM — won't fit</span>`;
     document.getElementById('block-20ft').classList.remove('active-container');
@@ -507,23 +541,45 @@ function renderSummary(filtered) {
   if (cbm <= CBM_40FT) {
     const spare = (CBM_40FT - cbm).toFixed(1);
     v40.innerHTML = `<span class="verdict-fits">✅ Fits — ${spare} CBM spare (${Math.round((spare/CBM_40FT)*100)}% headroom)</span>`;
-    if (cbm > CBM_20FT) document.getElementById('block-40ft').classList.add('active-container');
+    if (cbm > CBM_20FT) { document.getElementById('block-40ft').classList.add('active-container'); document.getElementById('block-40hq').classList.remove('active-container'); }
   } else {
-    v40.innerHTML = `<span class="verdict-over">✗ Over by ${(cbm - CBM_40FT).toFixed(1)} CBM — split order needed</span>`;
+    v40.innerHTML = `<span class="verdict-over">✗ Over by ${(cbm - CBM_40FT).toFixed(1)} CBM — won't fit</span>`;
     document.getElementById('block-40ft').classList.remove('active-container');
   }
 
+  // 40ft HQ bar
+  const pct40hq = Math.min((cbm / CBM_40HQ) * 100, 100);
+  const fill40hq = document.getElementById('fill-40hq');
+  fill40hq.style.width = pct40hq + '%';
+  fill40hq.className = 'container-bar-fill ' + (cbm <= CBM_40HQ ? (cbm <= CBM_40FT ? 'green' : 'orange') : 'red');
+  document.getElementById('fill-40hq-text').textContent = `${cbm} CBM`;
+  document.getElementById('stat-40hq-cbm').textContent = cbm.toFixed(1);
+  document.getElementById('stat-40hq-pct').textContent = Math.round((cbm / CBM_40HQ) * 100) + '%';
+  document.getElementById('stat-40hq-rem').textContent = cbm <= CBM_40HQ ? (CBM_40HQ - cbm).toFixed(1) : '0';
+  const v40hq = document.getElementById('verdict-40hq');
+  if (cbm <= CBM_40HQ) {
+    const spare = (CBM_40HQ - cbm).toFixed(1);
+    v40hq.innerHTML = `<span class="verdict-fits">✅ Fits — ${spare} CBM spare (${Math.round((spare/CBM_40HQ)*100)}% headroom)</span>`;
+    if (cbm > CBM_40FT) document.getElementById('block-40hq').classList.add('active-container');
+  } else {
+    v40hq.innerHTML = `<span class="verdict-over">✗ Over by ${(cbm - CBM_40HQ).toFixed(1)} CBM — split order needed</span>`;
+    document.getElementById('block-40hq').classList.remove('active-container');
+  }
+
   // Landed cost estimates (order cost + mid-range freight)
-  // 20ft: mid of $1,100–$4,650 ≈ $2,875 | 40ft: mid of $1,850–$6,060 ≈ $3,955
-  const MID_FREIGHT_20 = 2875, MID_FREIGHT_40 = 3955;
+  // 20ft: ~$2,875 | 40ft: ~$3,955 | 40ft HQ: ~$4,200
+  const MID_FREIGHT_20 = 2875, MID_FREIGHT_40 = 3955, MID_FREIGHT_40HQ = 4200;
   const el20 = document.getElementById('landed-20ft-val');
   const el40 = document.getElementById('landed-40ft-val');
+  const el40hq = document.getElementById('landed-40hq-val');
   if (totalCost > 0) {
     el20.textContent = '$' + ((totalCost + MID_FREIGHT_20) / 1000).toFixed(1) + 'k USD';
     el40.textContent = '$' + ((totalCost + MID_FREIGHT_40) / 1000).toFixed(1) + 'k USD';
+    el40hq.textContent = '$' + ((totalCost + MID_FREIGHT_40HQ) / 1000).toFixed(1) + 'k USD';
   } else {
     el20.textContent = '—';
     el40.textContent = '—';
+    el40hq.textContent = '—';
   }
 }
 
